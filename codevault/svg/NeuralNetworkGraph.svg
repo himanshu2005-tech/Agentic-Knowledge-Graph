@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <!-- Dark glowing background -->
+  <rect x="0" y="0" width="800" height="800" fill="#1a1a1a" rx="0" />
+  <circle cx="400" cy="400" r="400" fill="none" stroke="#333" stroke-width="2" />
+  
+  <!-- Glowing blue nodes -->
+  <g id="nodes">
+    <circle cx="400" cy="100" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="700" cy="200" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="600" cy="400" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="500" cy="600" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="200" cy="700" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="100" cy="500" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="300" cy="300" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="550" cy="550" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="650" cy="100" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="750" cy="350" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="450" cy="250" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="350" cy="450" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="250" cy="650" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="150" cy="350" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="700" cy="600" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="500" cy="400" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="600" cy="200" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="400" cy="700" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="300" cy="500" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+    <circle cx="200" cy="300" r="20" fill="#66CCFF" stroke="#FFFFFF" stroke-width="2" />
+  </g>
+  
+  <!-- Semi-transparent white lines connecting nodes -->
+  <g id="connections">
+    <line x1="400" y1="100" x2="700" y2="200" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="700" y1="200" x2="600" y2="400" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="600" y1="400" x2="500" y2="600" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="500" y1="600" x2="200" y2="700" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="200" y1="700" x2="100" y2="500" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="100" y1="500" x2="300" y2="300" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="300" y1="300" x2="550" y2="550" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="550" y1="550" x2="650" y2="100" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="650" y1="100" x2="750" y2="350" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="750" y1="350" x2="450" y2="250" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="450" y1="250" x2="350" y2="450" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="350" y1="450" x2="250" y2="650" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="250" y1="650" x2="150" y2="350" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="150" y1="350" x2="700" y2="600" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="700" y1="600" x2="500" y2="400" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="500" y1="400" x2="600" y2="200" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="600" y1="200" x2="400" y2="700" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="400" y1="700" x2="300" y2="500" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+    <line x1="300" y1="500" x2="200" y2="300" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5" />
+  </g>
+</svg>

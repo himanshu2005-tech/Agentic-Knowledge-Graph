@@ -1,0 +1,154 @@
+{
+  "questions": [
+    {
+      "id": "1",
+      "question": "Who invented the Python programming language?",
+      "expected_answer": "GuidoVanRossum"
+    },
+    {
+      "id": "2",
+      "question": "Who invented JavaScript?",
+      "expected_answer": "BrendanEich"
+    },
+    {
+      "id": "3",
+      "question": "Who developed TypeScript?",
+      "expected_answer": "AndersHejlsberg"
+    },
+    {
+      "id": "4",
+      "question": "Who developed the Java programming language?",
+      "expected_answer": "JamesGosling"
+    },
+    {
+      "id": "5",
+      "question": "Who invented C++?",
+      "expected_answer": "BjarneStroustrup"
+    },
+    {
+      "id": "6",
+      "question": "Who invented the Rust programming language?",
+      "expected_answer": "GraydonHoare"
+    },
+    {
+      "id": "7",
+      "question": "Who developed the Swift programming language?",
+      "expected_answer": "ChrisLattner"
+    },
+    {
+      "id": "8",
+      "question": "Who invented the Ruby programming language?",
+      "expected_answer": "YukihiroMatsumoto"
+    },
+    {
+      "id": "9",
+      "question": "Who developed the Scala programming language?",
+      "expected_answer": "MartinOdersky"
+    },
+    {
+      "id": "10",
+      "question": "Who developed the Perl programming language?",
+      "expected_answer": "LarryWall"
+    },
+    {
+      "id": "11",
+      "question": "Who invented the Lua programming language?",
+      "expected_answer": "RobertoIerusalimschy"
+    },
+    {
+      "id": "12",
+      "question": "Who developed the Julia programming language?",
+      "expected_answer": "JeffBezanson"
+    },
+    {
+      "id": "13",
+      "question": "Who developed the Fortran programming language?",
+      "expected_answer": "JohnBackus"
+    },
+    {
+      "id": "14",
+      "question": "Who invented Pascal?",
+      "expected_answer": "NiklausWirth"
+    },
+    {
+      "id": "15",
+      "question": "Who developed Prolog?",
+      "expected_answer": "AlainColmerauer"
+    },
+    {
+      "id": "16",
+      "question": "Who invented Lisp?",
+      "expected_answer": "JohnMcCarthy"
+    },
+    {
+      "id": "17",
+      "question": "Who developed Clojure?",
+      "expected_answer": "RichHickey"
+    },
+    {
+      "id": "18",
+      "question": "Who developed the F# programming language?",
+      "expected_answer": "DonSyme"
+    },
+    {
+      "id": "19",
+      "question": "Who developed OCaml?",
+      "expected_answer": "XavierLeroy"
+    },
+    {
+      "id": "20",
+      "question": "Who developed the Bash shell?",
+      "expected_answer": "BrianFox"
+    },
+    {
+      "id": "21",
+      "question": "Who developed the Awk programming language?",
+      "expected_answer": ["AlfredAho", "PeterWeinberger", "BrianKernighan"]
+    },
+    {
+      "id": "22",
+      "question": "Who developed Sed?",
+      "expected_answer": "LeeMcMahon"
+    },
+    {
+      "id": "23",
+      "question": "Who developed Matlab?",
+      "expected_answer": "CleveMoler"
+    },
+    {
+      "id": "24",
+      "question": "Who developed the Scheme programming language?",
+      "expected_answer": "GeraldJaySussman"
+    },
+    {
+      "id": "25",
+      "question": "Who developed the BubbleSort algorithm?",
+      "expected_answer": "EdwardHarryFriendJr"
+    },
+    {
+      "id": "26",
+      "question": "Who developed the MergeSort algorithm?",
+      "expected_answer": "JohnVonNeumann"
+    },
+    {
+      "id": "27",
+      "question": "Who developed QuickSort?",
+      "expected_answer": "TonyHoare"
+    },
+    {
+      "id": "28",
+      "question": "Who developed TimSort?",
+      "expected_answer": "TimPeters"
+    },
+    {
+      "id": "29",
+      "question": "What problem does Dijkstra's algorithm solve?",
+      "expected_answer": "ShortestPathProblem"
+    },
+    {
+      "id": "30",
+      "question": "What problem does the Edmonds-Karp algorithm solve?",
+      "expected_answer": "MaximumFlowProblem"
+    }
+  ]
+}

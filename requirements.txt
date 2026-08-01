@@ -1,0 +1,5 @@
+groq==0.8.0
+python-dotenv==1.0.1
+transformers==4.40.2
+torch==2.3.0
+bitsandbytes==0.42.0

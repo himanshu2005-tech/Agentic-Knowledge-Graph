@@ -1,0 +1,133 @@
+<!-- Auto-generated Code Vault for 'Spinning3DCube (Canvas)' [Html] -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spinning3DCube</title>
+  <style>
+    /* Add some basic styling to our page */
+    body {
+      margin: 0;
+      background-color: #000;
+      overflow: hidden;
+    }
+    #canvas {
+      border: 1px solid #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="600" height="600"></canvas>
+  <script>
+    // Get the canvas element
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+
+    // Define the vertices of our cube
+    var vertices = [
+      [-1, -1, -1],
+      [1, -1, -1],
+      [1, 1, -1],
+      [-1, 1, -1],
+      [-1, -1, 1],
+      [1, -1, 1],
+      [1, 1, 1],
+      [-1, 1, 1]
+    ];
+
+    // Define the edges of our cube
+    var edges = [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 0],
+      [4, 5],
+      [5, 6],
+      [6, 7],
+      [7, 4],
+      [0, 4],
+      [1, 5],
+      [2, 6],
+      [3, 7]
+    ];
+
+    // Define the rotation angles
+    var angleX = 0;
+    var angleY = 0;
+
+    // Define the projection function
+    function project(vertex) {
+      // Define the rotation matrices
+      var rotationX = [
+        [1, 0, 0],
+        [0, Math.cos(angleX), -Math.sin(angleX)],
+        [0, Math.sin(angleX), Math.cos(angleX)]
+      ];
+      var rotationY = [
+        [Math.cos(angleY), 0, Math.sin(angleY)],
+        [0, 1, 0],
+        [-Math.sin(angleY), 0, Math.cos(angleY)]
+      ];
+
+      // Apply the rotation matrices
+      var rotatedX = [
+        rotationX[0][0] * vertex[0] + rotationX[0][1] * vertex[1] + rotationX[0][2] * vertex[2],
+        rotationX[1][0] * vertex[0] + rotationX[1][1] * vertex[1] + rotationX[1][2] * vertex[2],
+        rotationX[2][0] * vertex[0] + rotationX[2][1] * vertex[1] + rotationX[2][2] * vertex[2]
+      ];
+      var rotatedXY = [
+        rotationY[0][0] * rotatedX[0] + rotationY[0][1] * rotatedX[1] + rotationY[0][2] * rotatedX[2],
+        rotationY[1][0] * rotatedX[0] + rotationY[1][1] * rotatedX[1] + rotationY[1][2] * rotatedX[2],
+        rotationY[2][0] * rotatedX[0] + rotationY[2][1] * rotatedX[1] + rotationY[2][2] * rotatedX[2]
+      ];
+
+      // Apply the projection
+      var factor = 4 / (4 - rotatedXY[2]);
+      var projectedX = rotatedXY[0] * factor * 100 + canvas.width / 2;
+      var projectedY = -rotatedXY[1] * factor * 100 + canvas.height / 2;
+
+      return [projectedX, projectedY];
+    }
+
+    // Define the draw function
+    function draw() {
+      // Clear the canvas
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the vertices
+      for (var i = 0; i < vertices.length; i++) {
+        var projected = project(vertices[i]);
+        ctx.fillStyle = 'yellow';
+        ctx.beginPath();
+        ctx.arc(projected[0], projected[1], 5, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      // Draw the edges
+      ctx.strokeStyle = 'green';
+      ctx.lineWidth = 2;
+      for (var i = 0; i < edges.length; i++) {
+        var vertex1 = vertices[edges[i][0]];
+        var vertex2 = vertices[edges[i][1]];
+        var projected1 = project(vertex1);
+        var projected2 = project(vertex2);
+        ctx.beginPath();
+        ctx.moveTo(projected1[0], projected1[1]);
+        ctx.lineTo(projected2[0], projected2[1]);
+        ctx.stroke();
+      }
+
+      // Update the rotation angles
+      angleX += 0.01;
+      angleY += 0.01;
+
+      // Request the next frame
+      requestAnimationFrame(draw);
+    }
+
+    // Start the animation
+    draw();
+  </script>
+</body>
+</html>

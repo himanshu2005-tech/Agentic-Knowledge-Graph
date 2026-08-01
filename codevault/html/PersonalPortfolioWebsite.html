@@ -1,0 +1,206 @@
+<!-- Auto-generated Code Vault for 'PersonalPortfolioWebsite' [Html] -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Portfolio Website</title>
+    <style>
+        /* Global Styles */
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #34A8FF;
+            --background-color: linear-gradient(120deg, #6c5ce7, #34A8FF);
+            --text-color: #fff;
+            --glass-color: rgba(255, 255, 255, 0.1);
+            --box-shadow: 0 0 1rem rgba(0, 0, 0, 0.2);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        a {
+            text-decoration: none;
+            color: var(--text-color);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .glass {
+            background: var(--glass-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .typing-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        /* About Me Section */
+        .about-me {
+            margin-top: 5rem;
+        }
+        .about-me h2 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .about-me p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        /* Projects Section */
+        .projects {
+            margin-top: 5rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        .project {
+            background: var(--glass-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+        .project h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .project p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        /* Contact Section */
+        .contact {
+            margin-top: 5rem;
+        }
+        .contact h2 {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .contact form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .contact input, .contact textarea {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: var(--glass-color);
+            box-shadow: var(--box-shadow);
+        }
+        .contact button {
+            padding: 1rem 2rem;
+            background: var(--primary-color);
+            color: var(--text-color);
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        .contact button:hover {
+            background: var(--secondary-color);
+        }
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        /* Hover Animations */
+        button {
+            transition: background 0.2s ease;
+        }
+        button:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="hero" id="home">
+            <h1>Welcome to my portfolio!</h1>
+            <div class="typing-text">
+                <span>I'm a</span>
+                <span class="typing"></span>
+            </div>
+        </section>
+        <section class="about-me" id="about">
+            <h2>About Me</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sit amet nulla auctor, vestibulum magna sed, convallis ex.</p>
+        </section>
+        <section class="projects" id="projects">
+            <div class="project">
+                <h3>Project 1</h3>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sit amet nulla auctor, vestibulum magna sed, convallis ex.</p>
+            </div>
+            <div class="project">
+                <h3>Project 2</h3>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sit amet nulla auctor, vestibulum magna sed, convallis ex.</p>
+            </div>
+            <div class="project">
+                <h3>Project 3</h3>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sit amet nulla auctor, vestibulum magna sed, convallis ex.</p>
+            </div>
+        </section>
+        <section class="contact" id="contact">
+            <h2>Get in Touch</h2>
+            <form>
+                <input type="text" placeholder="Name">
+                <input type="email" placeholder="Email">
+                <textarea placeholder="Message"></textarea>
+                <button>Send Message</button>
+            </form>
+        </section>
+    </div>
+    <script>
+        // Typing Text Animation
+        const typingText = document.querySelector('.typing');
+        const typingTextArray = ['Developer', 'Designer', 'Engineer'];
+        let typingTextIndex = 0;
+        let typingTextCounter = 0;
+        function typingTextAnimation() {
+            if (typingTextCounter < typingTextArray[typingTextIndex].length) {
+                typingText.textContent += typingTextArray[typingTextIndex][typingTextCounter];
+                typingTextCounter++;
+            } else {
+                typingTextIndex++;
+                typingTextCounter = 0;
+                if (typingTextIndex >= typingTextArray.length) {
+                    typingTextIndex = 0;
+                }
+                typingText.textContent = '';
+            }
+            setTimeout(typingTextAnimation, 100);
+        }
+        typingTextAnimation();
+    </script>
+</body>
+</html>

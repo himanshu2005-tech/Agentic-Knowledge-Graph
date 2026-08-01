@@ -1,0 +1,177 @@
+<!-- Auto-generated Code Vault for 'NeumorphicPortfolio' [Html] -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeumorphicPortfolio</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0e5ec;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Neumorphic Styles */
+        .neumorphic {
+            box-shadow: 
+                5px 5px 10px #c9d6df, 
+                -5px -5px 10px #ffffff;
+            border-radius: 10px;
+        }
+        
+        .neumorphic-inset {
+            box-shadow: 
+                inset 5px 5px 10px #c9d6df, 
+                inset -5px -5px 10px #ffffff;
+            border-radius: 10px;
+        }
+        
+        /* Hero Section Styles */
+        .hero {
+            background-color: #ffffff;
+            padding: 50px;
+            text-align: center;
+            margin-top: 50px;
+        }
+        
+        .hero .neumorphic {
+            padding: 20px;
+            width: 50%;
+            margin: 0 auto;
+        }
+        
+        /* Skills Grid Styles */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 50px;
+        }
+        
+        .skill-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .skill-card.neumorphic {
+            box-shadow: 
+                5px 5px 10px #c9d6df, 
+                -5px -5px 10px #ffffff;
+        }
+        
+        /* Navigation Styles */
+        .nav {
+            background-color: #ffffff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-shadow: 
+                0px 5px 10px #c9d6df, 
+                0px -5px 10px #ffffff;
+            border-radius: 0px 0px 10px 10px;
+        }
+        
+        .nav-item {
+            margin-right: 20px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .nav-item.neumorphic {
+            box-shadow: 
+                5px 5px 10px #c9d6df, 
+                -5px -5px 10px #ffffff;
+        }
+        
+        /* Contact Form Styles */
+        .contact-form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 
+                5px 5px 10px #c9d6df, 
+                -5px -5px 10px #ffffff;
+        }
+        
+        .contact-form input, .contact-form textarea {
+            padding: 10px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 
+                inset 5px 5px 10px #c9d6df, 
+                inset -5px -5px 10px #ffffff;
+        }
+        
+        .contact-form button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 
+                5px 5px 10px #c9d6df, 
+                -5px -5px 10px #ffffff;
+            cursor: pointer;
+        }
+        
+        .contact-form button:active {
+            box-shadow: 
+                inset 5px 5px 10px #c9d6df, 
+                inset -5px -5px 10px #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-item neumorphic">Home</div>
+        <div class="nav-item neumorphic">About</div>
+        <div class="nav-item neumorphic">Contact</div>
+    </nav>
+    <section class="hero">
+        <div class="neumorphic">
+            <h1>Welcome to my Neumorphic Portfolio</h1>
+            <p>I'm a web developer with a passion for creating beautiful and functional websites.</p>
+        </div>
+    </section>
+    <section class="skills-grid">
+        <div class="skill-card neumorphic">
+            <h2>HTML</h2>
+            <p>I have experience with HTML5 and can create semantic and accessible markup.</p>
+        </div>
+        <div class="skill-card neumorphic">
+            <h2>CSS</h2>
+            <p>I have experience with CSS3 and can create responsive and visually appealing designs.</p>
+        </div>
+        <div class="skill-card neumorphic">
+            <h2>JavaScript</h2>
+            <p>I have experience with JavaScript and can create interactive and dynamic web applications.</p>
+        </div>
+    </section>
+    <section class="contact-form neumorphic">
+        <h2>Get in Touch</h2>
+        <form>
+            <input type="text" placeholder="Name" />
+            <input type="email" placeholder="Email" />
+            <textarea placeholder="Message"></textarea>
+            <button>Send</button>
+        </form>
+    </section>
+    <script>
+        // Add event listener to contact form button
+        document.querySelector('.contact-form button').addEventListener('click', function() {
+            // Add inset shadow to button on click
+            this.style.boxShadow = 'inset 5px 5px 10px #c9d6df, inset -5px -5px 10px #ffffff';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!-- Auto-generated Code Vault for 'PixelArtEditor' [Html] -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelArtEditor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2f2f2f;
+            color: #fff;
+        }
+        #canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #canvas {
+            border: 1px solid #444;
+            background-color: #333;
+        }
+        .tool-button {
+            margin: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #444;
+            color: #fff;
+            cursor: pointer;
+        }
+        .tool-button:hover {
+            background-color: #555;
+        }
+        #color-picker {
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="canvas" width="256" height="256"></canvas>
+        <button class="tool-button" id="eraser-button">Eraser</button>
+        <input type="color" id="color-picker" value="#ff0000">
+        <button class="tool-button" id="clear-button">Clear Canvas</button>
+    </div>
+    <script>
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let pixelSize = 16;
+        let drawing = false;
+        let currentColor = '#ff0000';
+        let eraser = false;
+
+        // Initialize canvas
+        for (let i = 0; i < 16; i++) {
+            for (let j = 0; j < 16; j++) {
+                ctx.fillStyle = '#333';
+                ctx.fillRect(i * pixelSize, j * pixelSize, pixelSize, pixelSize);
+            }
+        }
+
+        // Add event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            drawing = true;
+            let x = Math.floor(e.offsetX / pixelSize);
+            let y = Math.floor(e.offsetY / pixelSize);
+            if (eraser) {
+                ctx.fillStyle = '#333';
+            } else {
+                ctx.fillStyle = currentColor;
+            }
+            ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (drawing) {
+                let x = Math.floor(e.offsetX / pixelSize);
+                let y = Math.floor(e.offsetY / pixelSize);
+                if (eraser) {
+                    ctx.fillStyle = '#333';
+                } else {
+                    ctx.fillStyle = currentColor;
+                }
+                ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            drawing = false;
+        });
+
+        document.getElementById('eraser-button').addEventListener('click', () => {
+            eraser = !eraser;
+            if (eraser) {
+                document.getElementById('eraser-button').style.backgroundColor = '#555';
+            } else {
+                document.getElementById('eraser-button').style.backgroundColor = '#444';
+            }
+        });
+
+        document.getElementById('color-picker').addEventListener('input', (e) => {
+            currentColor = e.target.value;
+        });
+
+        document.getElementById('clear-button').addEventListener('click', () => {
+            for (let i = 0; i < 16; i++) {
+                for (let j = 0; j < 16; j++) {
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(i * pixelSize, j * pixelSize, pixelSize, pixelSize);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
+  <!-- Dark background -->
+  <rect x="0" y="0" width="500" height="500" fill="#000" rx="10" />
+  
+  <!-- Glowing green concentric circles -->
+  <circle cx="250" cy="250" r="50" fill="none" stroke="#0f0" stroke-width="2" opacity="0.5" />
+  <circle cx="250" cy="250" r="100" fill="none" stroke="#0f0" stroke-width="2" opacity="0.4" />
+  <circle cx="250" cy="250" r="150" fill="none" stroke="#0f0" stroke-width="2" opacity="0.3" />
+  <circle cx="250" cy="250" r="200" fill="none" stroke="#0f0" stroke-width="2" opacity="0.2" />
+  <circle cx="250" cy="250" r="250" fill="none" stroke="#0f0" stroke-width="2" opacity="0.1" />
+  
+  <!-- Crosshairs -->
+  <line x1="250" y1="0" x2="250" y2="500" stroke="#fff" stroke-width="1" opacity="0.5" />
+  <line x1="0" y1="250" x2="500" y2="250" stroke="#fff" stroke-width="1" opacity="0.5" />
+  
+  <!-- Sweeping radar beam effect -->
+  <polygon points="250,0 260,50 250,100 240,50" fill="#0f0" opacity="0.5">
+    <animateTransform attributeName="transform" type="rotate" from="0 250 250" to="360 250 250" dur="4s" repeatCount="indefinite" />
+  </polygon>
+  <polygon points="250,0 260,50 250,100 240,50" fill="#0f0" opacity="0.3">
+    <animateTransform attributeName="transform" type="rotate" from="0 250 250" to="360 250 250" dur="4s" repeatCount="indefinite" begin="0.5s" />
+  </polygon>
+  <polygon points="250,0 260,50 250,100 240,50" fill="#0f0" opacity="0.1">
+    <animateTransform attributeName="transform" type="rotate" from="0 250 250" to="360 250 250" dur="4s" repeatCount="indefinite" begin="1s" />
+  </polygon>
+  
+  <!-- Small blips (circles) indicating targets -->
+  <circle cx="100" cy="100" r="5" fill="#f00" />
+  <circle cx="200" cy="300" r="5" fill="#f00" />
+  <circle cx="300" cy="200" r="5" fill="#f00" />
+  <circle cx="400" cy="400" r="5" fill="#f00" />
+</svg>

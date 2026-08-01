@@ -1,0 +1,129 @@
+<!-- Auto-generated Code Vault for 'WebAudioSynth' [Html] -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebAudioSynth</title>
+  <style>
+    /* Add some basic styling to our piano keyboard */
+    .piano-keyboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .piano-key {
+      width: 50px;
+      height: 200px;
+      margin: 5px;
+      border: 1px solid black;
+      border-radius: 5px;
+      background-color: white;
+      display: inline-block;
+      cursor: pointer;
+    }
+    .piano-key:hover {
+      background-color: lightgray;
+    }
+    .sharp-key {
+      background-color: black;
+      color: white;
+    }
+    .volume-slider {
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>WebAudioSynth</h1>
+  <div class="piano-keyboard">
+    <!-- Generate piano keys dynamically with JavaScript -->
+  </div>
+  <input type="range" min="0" max="1" value="0.5" step="0.01" class="volume-slider" id="volume-slider">
+  <script>
+    // Get the piano keyboard and volume slider elements
+    const pianoKeyboard = document.querySelector('.piano-keyboard');
+    const volumeSlider = document.getElementById('volume-slider');
+
+    // Define the notes and their frequencies
+    const notes = [
+      { note: 'C3', frequency: 261.63, key: 'C' },
+      { note: 'C#3', frequency: 277.18, key: 'C#' },
+      { note: 'D3', frequency: 293.66, key: 'D' },
+      { note: 'D#3', frequency: 311.13, key: 'D#' },
+      { note: 'E3', frequency: 329.63, key: 'E' },
+      { note: 'F3', frequency: 349.23, key: 'F' },
+      { note: 'F#3', frequency: 369.99, key: 'F#' },
+      { note: 'G3', frequency: 392.00, key: 'G' },
+      { note: 'G#3', frequency: 415.30, key: 'G#' },
+      { note: 'A3', frequency: 440.00, key: 'A' },
+      { note: 'A#3', frequency: 466.16, key: 'A#' },
+      { note: 'B3', frequency: 493.88, key: 'B' },
+      { note: 'C4', frequency: 523.25, key: 'C' },
+      { note: 'C#4', frequency: 554.37, key: 'C#' },
+      { note: 'D4', frequency: 587.33, key: 'D' },
+      { note: 'D#4', frequency: 622.25, key: 'D#' },
+      { note: 'E4', frequency: 659.26, key: 'E' },
+      { note: 'F4', frequency: 698.46, key: 'F' },
+      { note: 'F#4', frequency: 739.99, key: 'F#' },
+      { note: 'G4', frequency: 783.99, key: 'G' },
+      { note: 'G#4', frequency: 830.61, key: 'G#' },
+      { note: 'A4', frequency: 880.00, key: 'A' },
+      { note: 'A#4', frequency: 932.33, key: 'A#' },
+      { note: 'B4', frequency: 987.77, key: 'B' },
+    ];
+
+    // Create the piano keys
+    notes.forEach((note) => {
+      const key = document.createElement('div');
+      key.classList.add('piano-key');
+      if (note.key.includes('#')) {
+        key.classList.add('sharp-key');
+      }
+      key.textContent = note.key;
+      key.dataset.frequency = note.frequency;
+      pianoKeyboard.appendChild(key);
+    });
+
+    // Add event listeners to the piano keys
+    pianoKeyboard.addEventListener('click', (event) => {
+      if (event.target.classList.contains('piano-key')) {
+        playNote(event.target.dataset.frequency);
+      }
+    });
+
+    // Add event listener to the volume slider
+    volumeSlider.addEventListener('input', (event) => {
+      setVolume(event.target.value);
+    });
+
+    // Define the Web Audio API context and gain node
+    const audioContext = new AudioContext();
+    const gainNode = audioContext.createGain();
+    gainNode.connect(audioContext.destination);
+    gainNode.gain.value = 0.5;
+
+    // Define the play note function
+    function playNote(frequency) {
+      const oscillator = audioContext.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      oscillator.connect(gainNode);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 1);
+    }
+
+    // Define the set volume function
+    function setVolume(volume) {
+      gainNode.gain.value = volume;
+    }
+
+    // Add event listener to the document for keyboard input
+    document.addEventListener('keydown', (event) => {
+      const note = notes.find((note) => note.key.toLowerCase() === event.key);
+      if (note) {
+        playNote(note.frequency);
+      }
+    });
+  </script>
+</body>
+</html>

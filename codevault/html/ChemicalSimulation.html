@@ -1,0 +1,123 @@
+<!-- Auto-generated Code Vault for 'ChemicalSimulation' [Html] -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ChemicalSimulation</title>
+  <style>
+    /* Add some basic styling to our page */
+    body {
+      margin: 0;
+      background-color: #000;
+    }
+    #canvas {
+      border: 1px solid #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="600"></canvas>
+  <script>
+    // Get the canvas element
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+
+    // Set the canvas dimensions
+    var width = canvas.width;
+    var height = canvas.height;
+
+    // Define the Gray-Scott model parameters
+    var Du = 0.16; // Diffusion rate for chemical U
+    var Dv = 0.08; // Diffusion rate for chemical V
+    var F = 0.035; // Feed rate for chemical U
+    var k = 0.065; // Kill rate for chemical V
+
+    // Initialize the chemical concentrations
+    var u = new Array(width * height).fill(1.0);
+    var v = new Array(width * height).fill(0.0);
+
+    // Define the colormap
+    function colormap(concentration) {
+      var r = Math.floor(255 * concentration);
+      var g = Math.floor(255 * (1 - concentration));
+      var b = 128;
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    // Function to update the chemical concentrations
+    function update() {
+      var newU = new Array(width * height).fill(0.0);
+      var newV = new Array(width * height).fill(0.0);
+
+      for (var i = 0; i < width; i++) {
+        for (var j = 0; j < height; j++) {
+          var index = i + j * width;
+          var uCenter = u[index];
+          var vCenter = v[index];
+
+          // Apply the Gray-Scott model
+          var uLaplace = 0.0;
+          var vLaplace = 0.0;
+          if (i > 0) {
+            uLaplace += u[index - 1];
+            vLaplace += v[index - 1];
+          }
+          if (i < width - 1) {
+            uLaplace += u[index + 1];
+            vLaplace += v[index + 1];
+          }
+          if (j > 0) {
+            uLaplace += u[index - width];
+            vLaplace += v[index - width];
+          }
+          if (j < height - 1) {
+            uLaplace += u[index + width];
+            vLaplace += v[index + width];
+          }
+          uLaplace = (uLaplace - 4 * uCenter) / 4;
+          vLaplace = (vLaplace - 4 * vCenter) / 4;
+
+          newU[index] = uCenter + Du * uLaplace - uCenter * vCenter * vCenter + F * (1 - uCenter);
+          newV[index] = vCenter + Dv * vLaplace + uCenter * vCenter * vCenter - (F + k) * vCenter;
+        }
+      }
+
+      // Update the chemical concentrations
+      u = newU;
+      v = newV;
+    }
+
+    // Function to draw the chemical concentrations
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      for (var i = 0; i < width; i++) {
+        for (var j = 0; j < height; j++) {
+          var index = i + j * width;
+          var concentration = u[index];
+          ctx.fillStyle = colormap(concentration);
+          ctx.fillRect(i, j, 1, 1);
+        }
+      }
+    }
+
+    // Initialize the simulation
+    for (var i = 0; i < width; i++) {
+      for (var j = 0; j < height; j++) {
+        var index = i + j * width;
+        if (Math.random() < 0.1) {
+          u[index] = 0.5;
+          v[index] = 0.5;
+        }
+      }
+    }
+
+    // Run the simulation
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
+</body>
+</html>

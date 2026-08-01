@@ -1,0 +1,130 @@
+<!-- Auto-generated Code Vault for 'BrainSimulation (Canvas)' [Html] -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BrainSimulation</title>
+  <style>
+    body {
+      background-color: #2f2f2f;
+      font-family: monospace;
+    }
+    #canvas {
+      border: 1px solid #444;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="600"></canvas>
+  <script>
+    // Get the canvas element
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+
+    // Define the node properties
+    var nodeRadius = 20;
+    var nodeSpacing = 100;
+    var layers = 3;
+    var nodesPerLayer = 5;
+
+    // Define the line properties
+    var lineThickness = 2;
+
+    // Define the pulse properties
+    var pulseSpeed = 2;
+    var pulseSize = 10;
+
+    // Initialize the nodes and lines
+    var nodes = [];
+    for (var i = 0; i < layers; i++) {
+      nodes[i] = [];
+      for (var j = 0; j < nodesPerLayer; j++) {
+        nodes[i][j] = {
+          x: (i * nodeSpacing) + (j * nodeSpacing),
+          y: canvas.height / 2,
+          radius: nodeRadius
+        };
+      }
+    }
+
+    // Initialize the pulses
+    var pulses = [];
+    for (var i = 0; i < layers - 1; i++) {
+      for (var j = 0; j < nodesPerLayer; j++) {
+        for (var k = 0; k < nodesPerLayer; k++) {
+          pulses.push({
+            x: nodes[i][j].x + nodeRadius,
+            y: nodes[i][j].y,
+            destX: nodes[i + 1][k].x - nodeRadius,
+            destY: nodes[i + 1][k].y,
+            speedX: (nodes[i + 1][k].x - nodes[i][j].x) / 100,
+            speedY: (nodes[i + 1][k].y - nodes[i][j].y) / 100,
+            size: pulseSize
+          });
+        }
+      }
+    }
+
+    // Draw the nodes and lines
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < layers; i++) {
+        for (var j = 0; j < nodesPerLayer; j++) {
+          ctx.beginPath();
+          ctx.arc(nodes[i][j].x, nodes[i][j].y, nodes[i][j].radius, 0, 2 * Math.PI);
+          ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
+          ctx.fill();
+        }
+      }
+      for (var i = 0; i < layers - 1; i++) {
+        for (var j = 0; j < nodesPerLayer; j++) {
+          for (var k = 0; k < nodesPerLayer; k++) {
+            ctx.beginPath();
+            ctx.moveTo(nodes[i][j].x, nodes[i][j].y);
+            ctx.lineTo(nodes[i + 1][k].x, nodes[i + 1][k].y);
+            ctx.strokeStyle = 'rgba(128, 0, 128, 0.5)';
+            ctx.lineWidth = lineThickness;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    // Update the pulses
+    function update() {
+      for (var i = 0; i < pulses.length; i++) {
+        pulses[i].x += pulses[i].speedX;
+        pulses[i].y += pulses[i].speedY;
+        if (Math.abs(pulses[i].x - pulses[i].destX) < pulseSpeed && Math.abs(pulses[i].y - pulses[i].destY) < pulseSpeed) {
+          pulses[i].x = nodes[layers - 1][Math.floor(Math.random() * nodesPerLayer)].x + nodeRadius;
+          pulses[i].y = nodes[layers - 1][Math.floor(Math.random() * nodesPerLayer)].y;
+          pulses[i].destX = nodes[0][Math.floor(Math.random() * nodesPerLayer)].x - nodeRadius;
+          pulses[i].destY = nodes[0][Math.floor(Math.random() * nodesPerLayer)].y;
+          pulses[i].speedX = (pulses[i].destX - pulses[i].x) / 100;
+          pulses[i].speedY = (pulses[i].destY - pulses[i].y) / 100;
+        }
+      }
+    }
+
+    // Draw the pulses
+    function drawPulses() {
+      for (var i = 0; i < pulses.length; i++) {
+        ctx.beginPath();
+        ctx.arc(pulses[i].x, pulses[i].y, pulses[i].size, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+        ctx.fill();
+      }
+    }
+
+    // Main loop
+    function loop() {
+      draw();
+      update();
+      drawPulses();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
