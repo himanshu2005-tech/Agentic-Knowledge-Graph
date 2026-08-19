@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # ══════════════════════════════════════════════════════════════════════
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-KG_MODEL = "llama-3.3-70b-versatile"       # Heavy model on Groq: topic extraction + fact generation
+KG_MODEL = "openai/gpt-oss-120b"       # Heavy model: topic extraction + fact generation
 LOCAL_ANSWER_MODEL = os.path.join(BASE_DIR, "local_qwen_3b")  # Local 3B model for answer synthesis
 MIN_FACTS_THRESHOLD = 3   # If fewer facts found locally, trigger on-demand generation
 MAX_RETRIES = 3
@@ -229,12 +229,13 @@ Topic: {topic}
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.05,
+                temperature=1,
                 max_completion_tokens=500,
                 top_p=1,
+                reasoning_effort="low",
                 stream=False,
             )
-            raw_output = completion.choices[0].message.content or ""
+            raw_output = (completion.choices[0].message.content or "") or getattr(completion.choices[0].message, "reasoning_content", "") or ""
             break
         except Exception as e:
             error_msg = str(e)
@@ -341,16 +342,21 @@ def evaluate_code_need(question: str, topics: list[str], client: Groq, model_nam
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question},
             ],
-            temperature=0.0,
-            max_tokens=15,
+            temperature=1,
+            max_completion_tokens=100,
+            top_p=1,
+            reasoning_effort="low",
+            stream=False,
         )
-        response = completion.choices[0].message.content.strip().lower()
+        _msg = completion.choices[0].message
+        response = (((_msg.content or "") or getattr(_msg, "reasoning_content", "") or "")).strip().lower()
     except Exception as e:
         print(f"   ⚠️ Code evaluation failed: {e}")
         return False, "", "", ""
 
     if response.startswith("yes"):
-        parts = [p.strip() for p in completion.choices[0].message.content.split("|")]
+        _raw = ((_msg.content or "") or getattr(_msg, "reasoning_content", "") or "")
+        parts = [p.strip() for p in _raw.split("|")]
         
         lang = parts[1].lower() if len(parts) > 1 else "python"
         flavor = parts[2] if len(parts) > 2 else ""
@@ -414,10 +420,14 @@ def generate_code_for_vault(topic: str, user_question: str, language: str, flavo
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=0.0,
-            max_tokens=8000,
+            temperature=1,
+            max_completion_tokens=6000,
+            top_p=1,
+            reasoning_effort="medium",
+            stream=False,
         )
-        raw_code = completion.choices[0].message.content.strip()
+        _code_msg = completion.choices[0].message
+        raw_code = ((_code_msg.content or "") or getattr(_code_msg, "reasoning_content", "") or "").strip()
     except Exception as e:
         print(f"   ⚠️ Code generation failed: {e}")
         return 0
@@ -560,10 +570,14 @@ def should_execute_code(question: str, concept: str, client: Groq, model_name: s
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Question: {question}\nCode concept: {concept}"},
             ],
-            temperature=0.0,
-            max_tokens=5,
+            temperature=1,
+            max_completion_tokens=20,
+            top_p=1,
+            reasoning_effort="low",
+            stream=False,
         )
-        response = completion.choices[0].message.content.strip().lower()
+        _exec_msg = completion.choices[0].message
+        response = ((_exec_msg.content or "") or getattr(_exec_msg, "reasoning_content", "") or "").strip().lower()
         return response.startswith("yes")
     except Exception as e:
         print(f"   ⚠️ Execution classification failed: {e}")
@@ -612,12 +626,16 @@ def extract_topics_from_question(question: str, client: Groq, model_name: str) -
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question},
             ],
-            temperature=0.0,
-            max_completion_tokens=100,
+            temperature=1,
+            max_completion_tokens=200,
             top_p=1,
+            reasoning_effort="low",
             stream=False,
         )
-        raw = completion.choices[0].message.content or ""
+        msg = completion.choices[0].message
+        # Reasoning models (like openai/gpt-oss-120b) may put the answer in
+        # reasoning_content when content is empty — handle both.
+        raw = (msg.content or "") or getattr(msg, "reasoning_content", "") or ""
         
         topics = []
         for line in raw.strip().split("\n"):
