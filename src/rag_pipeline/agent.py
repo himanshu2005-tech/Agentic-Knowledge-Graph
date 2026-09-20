@@ -14,12 +14,17 @@ import re
 import gc
 import sys
 import time
+import json
+import hashlib
 import logging
 import subprocess
 import argparse
 import threading
+import ctypes
+from datetime import datetime, timezone
 import torch
 from dotenv import load_dotenv
+import requests
 from groq import Groq
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TextIteratorStreamer
 
@@ -32,12 +37,16 @@ logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 KG_MODEL = "openai/gpt-oss-120b"       # Heavy model: topic extraction + fact generation
 LOCAL_ANSWER_MODEL = os.path.join(BASE_DIR, "local_qwen_3b")  # Local 3B model for answer synthesis
-MIN_FACTS_THRESHOLD = 3   # If fewer facts found locally, trigger on-demand generation
+MIN_FACTS_THRESHOLD = 1   # If 0 facts found locally, trigger on-demand generation
 MAX_RETRIES = 3
+CPU_INT8_MIN_AVAILABLE_GB = 10
 
 # File paths
 CRAWLER_KB_FILE = os.path.join(BASE_DIR, "data", "kg", "knowledge_base.txt")   # Pre-built by background crawler
 RAG_KB_FILE = os.path.join(BASE_DIR, "data", "rag", "rag_knowledge.txt")       # On-demand facts go here
+PROVENANCE_FILE = os.path.join(BASE_DIR, "data", "rag", "fact_provenance.jsonl")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "data", "rag", "answer_feedback.jsonl")
+REVIEW_QUEUE_FILE = os.path.join(BASE_DIR, "data", "rag", "fact_review_queue.jsonl")
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -148,7 +157,7 @@ def search_local_kg(topics: list[str], triplets: list[dict]) -> list[dict]:
         for topic in topics:
             topic_lower = topic.lower().replace(" ", "")
             topic_singular = topic_lower.rstrip('s') # Handle basic plural mismatches
-            
+
             # Avoid matching generic topics against file paths
             obj_matches = False
             if t["relation"].lower() != "hascontextfile":
@@ -163,13 +172,133 @@ def search_local_kg(topics: list[str], triplets: list[dict]) -> list[dict]:
     return results
 
 
+def _search_tokens(text: str) -> set[str]:
+    """Normalize prose and PascalCase entities for lexical KG ranking."""
+    spaced = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", text)
+    return {
+        token.lower().rstrip("s")
+        for token in re.findall(r"[A-Za-z0-9]+", spaced)
+        if len(token) > 2 and token.lower() not in {"what", "with", "from", "that", "this", "give", "information", "about", "does"}
+    }
+
+
+def retrieve_ranked_facts(question: str, topics: list[str], triplets: list[dict], top_k: int = 20) -> tuple[list[dict], float]:
+    """Rank KG facts by query/entity overlap and return a routing confidence score."""
+    query_tokens = _search_tokens(question)
+    topic_tokens = _search_tokens(" ".join(topics))
+    ranked = []
+    for fact in triplets:
+        subject_tokens = _search_tokens(fact["subject"])
+        object_tokens = _search_tokens(fact["object"])
+        relation_tokens = _search_tokens(fact["relation"])
+        fact_tokens = subject_tokens | object_tokens | relation_tokens | _search_tokens(fact["domain"])
+        overlap = query_tokens & fact_tokens
+        topic_overlap = topic_tokens & (subject_tokens | object_tokens)
+        if not overlap and not topic_overlap:
+            continue
+        score = len(overlap) * 1.0 + len(topic_overlap) * 1.5
+        if subject_tokens & query_tokens:
+            score += 1.0
+        if fact["relation"].lower() in {"isa", "ispartof", "has", "contains"}:
+            score += 0.15
+        ranked_fact = dict(fact)
+        ranked_fact["retrieval_score"] = round(score, 3)
+        ranked.append(ranked_fact)
+
+    ranked.sort(key=lambda fact: fact["retrieval_score"], reverse=True)
+    selected = ranked[:top_k]
+    if not selected or not topic_tokens:
+        return selected, 0.0
+    covered_topics = set().union(*[
+        topic_tokens & (_search_tokens(fact["subject"]) | _search_tokens(fact["object"]))
+        for fact in selected
+    ])
+    coverage = len(covered_topics) / len(topic_tokens)
+    strength = min(selected[0]["retrieval_score"] / 4.0, 1.0)
+    evidence_depth = min(len(selected) / 4.0, 1.0)
+    confidence = round(0.5 * coverage + 0.35 * strength + 0.15 * evidence_depth, 3)
+    return selected, confidence
+
+
+def print_evidence(facts: list[dict], provenance_index: dict[str, dict]) -> None:
+    """Show the exact KG facts and web sources used for the final answer."""
+    if not facts:
+        return
+    print("\nEvidence used:")
+    for index, fact in enumerate(facts, start=1):
+        fact_id = _fact_id(fact["domain"], fact["subject"], fact["relation"], fact["object"])
+        source_urls = [
+            source["url"] for source in provenance_index.get(fact_id, {}).get("provenance", {}).get("sources", [])
+            if source.get("url")
+        ]
+        source_text = f" | Sources: {', '.join(source_urls)}" if source_urls else " | Source: local knowledge graph"
+        print(f"  [F{index}] {fact['subject']} {fact['relation']} {fact['object']}{source_text}")
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  TOOL 1.5: TAVILY WEB SEARCH
+# ══════════════════════════════════════════════════════════════════════
+
+def search_tavily(query: str) -> tuple[str, list[dict]]:
+    """Fetch web evidence and retain its URLs for fact-level provenance.
+
+    The text context is for the LLM; the structured source list is persisted with
+    every fact accepted from this web-grounded generation pass.
+    """
+    api_key = os.environ.get("TAVILY_API_KEY")
+    if not api_key:
+        return "", []
+
+    url = "https://api.tavily.com/search"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "api_key": api_key,
+        "query": query,
+        "search_depth": "advanced",
+        "include_answer": False,
+        "max_results": 5
+    }
+
+    try:
+        response = requests.post(url, json=data, headers=headers, timeout=10)
+        response.raise_for_status()
+        raw_results = response.json().get("results", [])
+        sources = []
+        for index, result in enumerate(raw_results, start=1):
+            source_url = (result.get("url") or "").strip()
+            content = (result.get("content") or "").strip()
+            if not source_url or not content:
+                continue
+            sources.append({
+                "id": index,
+                "title": (result.get("title") or source_url).strip(),
+                "url": source_url,
+                "content": content,
+                "score": result.get("score"),
+            })
+        context = "\n\n".join(
+            f"[source={source['id']}] {source['title']}\nURL: {source['url']}\n{source['content']}"
+            for source in sources
+        )
+        return context, sources
+    except Exception as e:
+        logger.error(f"Tavily search failed: {e}")
+        return "", []
+
+
 # ══════════════════════════════════════════════════════════════════════
 #  TOOL 2: ON-DEMAND TRIPLET GENERATION
 # ══════════════════════════════════════════════════════════════════════
 
-def generate_new_triplets(topic: str, client: Groq, model_name: str, user_question: str = "") -> list[tuple]:
+def generate_new_triplets(topic: str, client, model_name: str, user_question: str = "", search_context: str = "") -> list[tuple]:
     """Generate new triplets for a topic using the 70B model via Groq API.
     Includes the user's original question as context for relevance."""
+    context_hint = ""
+    if search_context:
+        context_hint = f"\n\nCRITICAL CONTEXT: You must extract facts ONLY from the following LIVE WEB SEARCH RESULTS. Do not use your internal knowledge.\n---\n{search_context}\n---\nRelevant to user question: '{user_question}'"
+    elif user_question:
+        context_hint = f"\n\nCRITICAL CONTEXT: The user asked: \"{user_question}\". Generate facts highly relevant to this question."
+
     system_prompt = (
         "You are an enterprise-grade Knowledge Graph extraction engine producing "
         "encyclopedic-quality triples. Every triple you generate must be a universally "
@@ -187,12 +316,9 @@ def generate_new_triplets(topic: str, client: Groq, model_name: str, user_questi
         "7. NO placeholder or generic entities. Use specific, real names.\n"
         "8. Generate 10-20 high-quality triples per topic.\n"
         "9. Output ONLY the triples. No markdown, no explanations, no conversational text.\n"
-        "10. Focus on facts that are RELEVANT to the user's question context."
+        "10. RELATIONAL COMPLETENESS: Ensure that generated entities are explicitly linked back to the main Topic via relational triplets (e.g., if Topic is 'Amrita', you MUST generate (Amrita, hasCampus, CoimbatoreCampus))."
+        f"{context_hint}"
     )
-
-    context_hint = ""
-    if user_question:
-        context_hint = f"\n(Context: The user asked: \"{user_question}\". Generate facts relevant to this question.)\n"
 
     user_prompt = f"""\
 Topic: DNA
@@ -216,7 +342,6 @@ Topic: Photosynthesis
 [domain=Biology] (Photosynthesis, produces, Oxygen)
 [domain=Biology] (Photosynthesis, requires, CarbonDioxide)
 [domain=Biology] (Chloroplast, performs, Photosynthesis)
-{context_hint}
 Topic: {topic}
 """
 
@@ -305,7 +430,7 @@ _LANG_EXT_MAP = {
 }
 
 
-def evaluate_code_need(question: str, topics: list[str], client: Groq, model_name: str) -> tuple[bool, str, str]:
+def evaluate_code_need(question: str, topics: list[str], client, model_name: str) -> tuple[bool, str, str]:
     """Ask the 70B model whether the question requires an implementation/code.
     Returns (needs_code: bool, language: str, flavor: str).
     Flavor helps differentiate implementations (e.g. PyTorch vs Raw Python)."""
@@ -357,26 +482,26 @@ def evaluate_code_need(question: str, topics: list[str], client: Groq, model_nam
     if response.startswith("yes"):
         _raw = ((_msg.content or "") or getattr(_msg, "reasoning_content", "") or "")
         parts = [p.strip() for p in _raw.split("|")]
-        
+
         lang = parts[1].lower() if len(parts) > 1 else "python"
         flavor = parts[2] if len(parts) > 2 else ""
         concept = parts[3] if len(parts) > 3 else "GeneratedCode"
-        
+
         # Filter out hallucinated fillers if the model gets confused
         if flavor.lower() in ("yes", "no", "none", "and", "or", "in", "with", "using"):
             flavor = ""
-            
+
         # Clean concept to ensure PascalCase and no weird chars
         concept = re.sub(r"[^A-Za-z0-9]", "", concept)
         if not concept:
             concept = "GeneratedCode"
-            
+
         return True, lang, flavor, concept
     return False, "", "", ""
 
 
 def generate_code_for_vault(topic: str, user_question: str, language: str, flavor: str,
-                            client: Groq, model_name: str,
+                            client, model_name: str,
                             existing_keys: set, all_triplets: list[dict]) -> int:
     """Make a DEDICATED 70B call to generate implementation code for a topic.
     Supports any programming language and specific flavors (e.g. PyTorch). Saves the result to codevault/.
@@ -543,7 +668,7 @@ def execute_code_safely(filepath: str, timeout: int = 10) -> tuple[bool, str]:
         return False, f"Execution error: {e}"
 
 
-def should_execute_code(question: str, concept: str, client: Groq, model_name: str) -> bool:
+def should_execute_code(question: str, concept: str, client, model_name: str) -> bool:
     """Ask the 70B model whether the user wants to SEE the output of running
     the code, or just the source code itself."""
 
@@ -584,6 +709,164 @@ def should_execute_code(question: str, concept: str, client: Groq, model_name: s
         return False
 
 
+def _fact_id(domain: str, subject: str, relation: str, obj: str) -> str:
+    """Return a stable identifier for a canonical triple."""
+    canonical = f"{domain.lower()}|{subject.lower()}|{relation.lower()}|{obj.lower()}"
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _select_relevant_sources(subject: str, obj: str, sources: list[dict]) -> list[dict]:
+    """Keep sources mentioning a triple entity; fall back to all supplied evidence."""
+    entity_terms = {
+        token.lower() for token in re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)|\d+", f"{subject} {obj}")
+        if len(token) > 2
+    }
+    relevant = [
+        source for source in sources
+        if entity_terms.intersection((source["title"] + " " + source["content"]).lower().split())
+    ]
+    return relevant or sources
+
+
+def append_provenance_records(
+    triplets: list[tuple],
+    sources: list[dict],
+    query: str,
+    model_name: str,
+    filepath: str = PROVENANCE_FILE,
+) -> None:
+    """Append immutable JSONL provenance for accepted facts.
+
+    Facts are kept in the legacy text KB for retrieval compatibility; this sidecar
+    stores the evidence needed to audit or cite every generated fact.
+    """
+    if not triplets:
+        return
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    retrieved_at = datetime.now(timezone.utc).isoformat()
+    with open(filepath, "a", encoding="utf-8") as f:
+        for domain, subject, relation, obj in triplets:
+            matched_sources = _select_relevant_sources(subject, obj, sources)
+            record = {
+                "schema_version": 1,
+                "fact_id": _fact_id(domain, subject, relation, obj),
+                "triple": {
+                    "domain": domain,
+                    "subject": subject,
+                    "relation": relation,
+                    "object": obj,
+                },
+                "provenance": {
+                    "query": query,
+                    "retrieved_at": retrieved_at,
+                    "provider": "tavily" if sources else None,
+                    "sources": [
+                        {
+                            "title": source["title"],
+                            "url": source["url"],
+                            "excerpt": source["content"][:1200],
+                            "search_score": source.get("score"),
+                        }
+                        for source in matched_sources
+                    ],
+                },
+                "extraction": {
+                    "method": "web_grounded_llm" if sources else "llm_generated",
+                    "model": model_name,
+                    "verification_status": "web_grounded_unverified" if sources else "unverified",
+                },
+            }
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def load_provenance_index(filepath: str = PROVENANCE_FILE) -> dict[str, dict]:
+    """Load the newest provenance record for each fact without changing the KG."""
+    records = {}
+    if not os.path.exists(filepath):
+        return records
+    with open(filepath, "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                record = json.loads(line)
+                if record.get("fact_id"):
+                    records[record["fact_id"]] = record
+            except json.JSONDecodeError:
+                logger.warning("Skipping malformed provenance record")
+    return records
+
+
+def append_feedback_record(
+    question: str,
+    verdict: str,
+    note: str,
+    facts: list[dict],
+    provenance_index: dict[str, dict],
+    feedback_path: str = FEEDBACK_FILE,
+    review_queue_path: str = REVIEW_QUEUE_FILE,
+) -> dict:
+    """Persist answer feedback and queue disputed facts for human review.
+
+    Feedback never edits or deletes KG facts. Negative feedback creates a separate
+    review task so a curator can inspect the linked web evidence before changing
+    a fact's verification status.
+    """
+    fact_ids = []
+    source_urls = []
+    for fact in facts:
+        fact_id = _fact_id(fact["domain"], fact["subject"], fact["relation"], fact["object"])
+        fact_ids.append(fact_id)
+        for source in provenance_index.get(fact_id, {}).get("provenance", {}).get("sources", []):
+            if source.get("url"):
+                source_urls.append(source["url"])
+    source_urls = list(dict.fromkeys(source_urls))
+    submitted_at = datetime.now(timezone.utc).isoformat()
+    feedback_id = hashlib.sha256(f"{submitted_at}|{question}|{verdict}|{note}".encode("utf-8")).hexdigest()
+    record = {
+        "schema_version": 1,
+        "feedback_id": feedback_id,
+        "submitted_at": submitted_at,
+        "question": question,
+        "verdict": verdict,
+        "note": note,
+        "fact_ids": fact_ids,
+        "source_urls": source_urls,
+    }
+    os.makedirs(os.path.dirname(feedback_path), exist_ok=True)
+    with open(feedback_path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    if verdict in {"incorrect", "incomplete"}:
+        review_task = {
+            "schema_version": 1,
+            "feedback_id": feedback_id,
+            "created_at": submitted_at,
+            "status": "pending",
+            "priority": "high" if verdict == "incorrect" else "medium",
+            "reason": verdict,
+            "note": note,
+            "question": question,
+            "fact_ids": fact_ids,
+            "source_urls": source_urls,
+        }
+        with open(review_queue_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(review_task, ensure_ascii=False) + "\n")
+    return record
+
+
+def collect_answer_feedback(question: str, facts: list[dict], provenance_index: dict[str, dict]) -> str | None:
+    """Collect optional human judgement immediately after an answer is shown."""
+    try:
+        choice = input("\nWas this answer [c]orrect, [i]ncorrect, [n]complete, or [s]kip? ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return None
+    verdicts = {"c": "correct", "i": "incorrect", "n": "incomplete"}
+    if choice not in verdicts:
+        return None
+    note = input("Optional feedback note (press Enter to skip): ").strip()
+    append_feedback_record(question, verdicts[choice], note, facts, provenance_index)
+    return verdicts[choice]
+
+
 def append_triplets_to_file(triplets: list[tuple], filepath: str, existing_keys: set = None) -> list[str]:
     """Append new triplets to a knowledge base file, skipping duplicates. Creates parent dirs if needed."""
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -606,8 +889,12 @@ def append_triplets_to_file(triplets: list[tuple], filepath: str, existing_keys:
 #  TOOL 3: EXTRACT TOPICS FROM USER QUESTION
 # ══════════════════════════════════════════════════════════════════════
 
-def extract_topics_from_question(question: str, client: Groq, model_name: str) -> list[str]:
+def extract_topics_from_question(question: str, client=None, model_name: str = "") -> list[str]:
     """Use the LLM to extract key topics/entities from a user question."""
+    if client is None:
+        words = re.sub(r"[^A-Za-z0-9\s]", "", question).strip().split()
+        return [word.capitalize() for word in words if len(word) > 4][:3]
+
     system_prompt = (
         "You are a topic extraction engine. Given a user question, extract the 1-3 most "
         "important topics or entities that should be searched in a Knowledge Graph.\n\n"
@@ -636,7 +923,7 @@ def extract_topics_from_question(question: str, client: Groq, model_name: str) -
         # Reasoning models (like openai/gpt-oss-120b) may put the answer in
         # reasoning_content when content is empty — handle both.
         raw = (msg.content or "") or getattr(msg, "reasoning_content", "") or ""
-        
+
         topics = []
         for line in raw.strip().split("\n"):
             # Strip markdown bullets and numbering
@@ -644,15 +931,15 @@ def extract_topics_from_question(question: str, client: Groq, model_name: str) -
             # If it's a conversational sentence (more than 3 words or too long), skip it
             if not line or len(line.split()) > 3 or len(line) > 40:
                 continue
-            
+
             # Sanitize to PascalCase
             clean_topic = re.sub(r"[^A-Za-z0-9]", "", line)
             if clean_topic:
                 topics.append(clean_topic)
-        
+
         if not topics:
             raise ValueError("No valid topics parsed from LLM")
-            
+
         return topics[:3]
     except Exception as e:
         logger.error(f"Topic extraction failed/fallback: {e}")
@@ -661,8 +948,50 @@ def extract_topics_from_question(question: str, client: Groq, model_name: str) -
         return [w.capitalize() for w in words if len(w) > 4][:3]
 
 
-def load_local_model(model_path: str):
+def available_windows_memory_gb() -> float | None:
+    """Return available physical memory on Windows without adding a dependency."""
+    if os.name != "nt":
+        return None
+
+    class MEMORYSTATUSEX(ctypes.Structure):
+        _fields_ = [
+            ("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+            ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+            ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+            ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+            ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+        ]
+
+    memory = MEMORYSTATUSEX()
+    memory.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+    if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(memory)):
+        return round(memory.ullAvailPhys / (1024 ** 3), 1)
+    return None
+
+
+def select_windows_runtime(preference: str = "auto") -> tuple[str, str]:
+    """Choose an always-quantized local runtime for the current Windows machine."""
+    if preference not in {"auto", "gpu-4bit", "cpu-int8"}:
+        raise ValueError("runtime must be one of: auto, gpu-4bit, cpu-int8")
+    if preference == "gpu-4bit":
+        if not torch.cuda.is_available():
+            raise RuntimeError("gpu-4bit was requested but no CUDA-capable NVIDIA GPU is available")
+        return "gpu-4bit", "CUDA available; selecting 4-bit NF4 quantization"
+    if preference == "cpu-int8":
+        return "cpu-int8", "CPU mode requested; selecting dynamic INT8 quantization"
+    if torch.cuda.is_available():
+        return "gpu-4bit", "CUDA-capable NVIDIA GPU detected; selecting 4-bit NF4 quantization"
+    available_gb = available_windows_memory_gb()
+    if available_gb is not None and available_gb < CPU_INT8_MIN_AVAILABLE_GB:
+        return "cpu-int8", f"CPU-only; {available_gb:.1f} GB RAM available (the 3B model may be slow or run out of memory)"
+    detail = f"{available_gb:.1f} GB RAM available" if available_gb is not None else "available RAM unknown"
+    return "cpu-int8", f"CPU-only; {detail}; selecting dynamic INT8 quantization"
+
+
+def load_local_model(model_path: str, runtime: str = "auto"):
     """Load the local 3B model with 4-bit quantization for answer synthesis."""
+    selected_runtime, hardware_note = select_windows_runtime(runtime)
+    print(f"   Hardware: {hardware_note}")
     print(f"\n🔧 Loading local answer model from: {model_path}")
     print(f"   (Please be patient! Moving 3 Billion parameters into GPU VRAM takes 10-20 seconds. Do not press Ctrl+C...)")
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True,
@@ -670,22 +999,33 @@ def load_local_model(model_path: str):
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    quant_cfg = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.float16,
-        llm_int8_enable_fp32_cpu_offload=True,
-    )
-    model = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        quantization_config=quant_cfg,
-        device_map="cuda:0",
-        trust_remote_code=True,
-        low_cpu_mem_usage=True,
-        offload_folder="offload_cache",
-    )
+    if selected_runtime == "gpu-4bit":
+        quant_cfg = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            llm_int8_enable_fp32_cpu_offload=True,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            quantization_config=quant_cfg,
+            device_map="cuda:0",
+            trust_remote_code=True,
+            low_cpu_mem_usage=True,
+            offload_folder="offload_cache",
+        )
+    else:
+        # Dynamic quantization is CPU-native and works without CUDA/bitsandbytes.
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.float32,
+            trust_remote_code=True,
+            low_cpu_mem_usage=False,
+        )
+        model = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
     model.eval()
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     print(f"   ✅ Local model loaded successfully!")
     return tokenizer, model
 
@@ -693,11 +1033,13 @@ def load_local_model(model_path: str):
 def synthesize_answer_local(question: str, facts: list[dict], file_contexts: list[str], tokenizer, model, execution_output: str = "", needs_code: bool = False) -> str:
     """Synthesize a natural language answer using the LOCAL 3B model with real-time streaming."""
     if not facts and not file_contexts:
-        return "I don't have enough information in my Knowledge Graph to answer this question."
+        msg = "I don't have enough information in my Knowledge Graph to answer this question."
+        print(f"\n{'─' * 70}\n🤖 Agent: {msg}\n{'─' * 70}")
+        return msg
 
     fact_lines = []
-    for f in facts[:50]:  # Cap at 50 facts to stay within context limits
-        fact_lines.append(f"- {f['subject']} {f['relation']} {f['object']}")
+    for index, f in enumerate(facts[:20], start=1):
+        fact_lines.append(f"[F{index}] {f['subject']} {f['relation']} {f['object']}")
     facts_text = "\n".join(fact_lines)
 
     vault_text = ""
@@ -715,20 +1057,21 @@ def synthesize_answer_local(question: str, facts: list[dict], file_contexts: lis
         vault_text = "\n\nCODE VAULT FILES (Dense Context):\n" + "\n".join(file_contexts)
         system_prompt = (
             "You are an advanced factual assistant. You answer questions by grounding your response "
-            "in the Knowledge Graph facts and Code Vault files provided below.\n\n"
+            "STRICTLY in the Knowledge Graph facts and Code Vault files provided below.\n\n"
             "RULES:\n"
-            "1. You may use your own internal knowledge to elaborate, create analogies, or explain complex concepts.\n"
+            "1. Do NOT inject your own internal knowledge for rankings or statistics. You may use basic logical deduction to connect obvious entities (e.g. if the user asks about 'Amrita', recognize that 'CoimbatoreCampus' is part of it if present in the context).\n"
             "2. Ensure that your core factual claims do not contradict the provided facts.\n"
             "3. Answer accurately, theoretically, and conversationally, as the user is asking a conceptual question, NOT asking you to generate code."
         )
     else:
         system_prompt = (
-            "You are an advanced factual assistant. You answer questions by grounding your response "
-            "in the Knowledge Graph facts provided below.\n\n"
+            "You are a strict, factual assistant. You answer questions by grounding your response "
+            "ONLY in the Knowledge Graph facts provided below.\n\n"
             "RULES:\n"
-            "1. You may use your own internal knowledge to elaborate, create analogies, or explain complex concepts.\n"
+            "1. Do NOT inject your own internal knowledge, rankings, or statistics. You must only state facts explicitly provided in the context. However, you may use basic logical deduction to recognize obvious entity aliases or relationships.\n"
             "2. However, you MUST ensure that your core factual claims do not contradict the provided facts.\n"
-            "3. Answer accurately and conversationally."
+            "3. Cite every factual sentence with one or more fact labels such as [F1].\n"
+            "4. Answer accurately and conversationally, but do not hallucinate."
         )
 
     exec_text = ""
@@ -792,20 +1135,19 @@ def synthesize_answer_local(question: str, facts: list[dict], file_contexts: lis
 #  MAIN AGENT LOOP
 # ══════════════════════════════════════════════════════════════════════
 
-def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MODEL):
-    """Run the interactive Agentic RAG pipeline with dual models."""
+def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MODEL, runtime: str = "auto"):
+    """Run the local KG → 120B → web → local 3B RAG pipeline."""
     load_dotenv(override=True)
-    
+
     api_key = os.environ.get("GROQ_API_KEY", "")
     if not api_key:
         print("\n[ERROR] GROQ_API_KEY environment variable not set!")
-        print("Please create a .env file and add: GROQ_API_KEY=\"your_key_here\"")
+        print("Add GROQ_API_KEY to your .env file before running the 120B fallback.")
         return
-
-    groq_client = Groq(api_key=api_key)
+    groq_client = Groq()
 
     # Load local 3B model for answer synthesis
-    local_tokenizer, local_model = load_local_model(local_model_path)
+    local_tokenizer, local_model = load_local_model(local_model_path, runtime=runtime)
 
     # Load ONLY the on-demand RAG KB
     print("\n" + "=" * 70)
@@ -843,73 +1185,91 @@ def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MOD
             break
 
         # ── Step 1: Extract Topics (70B via Groq) ──
-        print(f"\n📌 Extracting topics from your question... [70B Groq]")
         topics = extract_topics_from_question(question, groq_client, kg_model)
-        print(f"   Topics identified: {', '.join(topics)}")
 
         time.sleep(1.0)  # Rate limit
 
         # ── Step 2: Search Local Graph ──
-        print(f"\n🔍 Searching local Knowledge Graph ({len(all_triplets)} facts)...")
-        local_results = search_local_kg(topics, all_triplets)
-        print(f"   Found {len(local_results)} relevant facts locally.")
+        local_results, local_confidence = retrieve_ranked_facts(question, topics, all_triplets)
+        print(f"   Local retrieval confidence: {local_confidence:.0%}")
 
         # ── Step 3: On-Demand Expansion (70B via Groq) ──
         new_facts_generated = 0
         topics_needing_expansion = []
+        data_source = "[Local Graph]"
 
-        for topic in topics:
-            topic_facts = search_local_kg([topic], all_triplets)
-            print(f"   → '{topic}': {len(topic_facts)} facts found")
-            if len(topic_facts) < MIN_FACTS_THRESHOLD:
-                topics_needing_expansion.append(topic)
+        if local_confidence < 0.60:
+            topics_needing_expansion = topics
 
         if topics_needing_expansion:
-            print(f"\n⚡ Topics with insufficient coverage: {', '.join(topics_needing_expansion)}")
-            print(f"   Generating new knowledge on-the-fly... [70B Groq]")
-
+            newly_generated_dicts = []
             for topic in topics_needing_expansion:
+                # Ask the 120B model from its own knowledge first. Web search is
+                # only used as a fallback when that produces no valid triplets.
+                web_sources = []
+                search_ctx = ""
                 new_triplets = generate_new_triplets(topic, groq_client, kg_model, user_question=question)
+                data_source = "[120B LLM]"
+                if not new_triplets and os.environ.get("TAVILY_API_KEY"):
+                    search_ctx, web_sources = search_tavily(f"{topic} {question}")
+                    if web_sources:
+                        new_triplets = generate_new_triplets(
+                            topic, groq_client, kg_model, user_question=question, search_context=search_ctx
+                        )
+                        data_source = "[Web + 120B LLM]"
                 if new_triplets:
                     # Write to the SEPARATE RAG file (not the crawler's file!)
                     written_lines = append_triplets_to_file(new_triplets, RAG_KB_FILE, existing_keys)
                     new_facts_generated += len(written_lines)
-                    print(f"   ✅ Generated {len(written_lines)} new facts for '{topic}' ({len(new_triplets) - len(written_lines)} duplicates skipped)")
 
                     # Add only deduplicated ones to in-memory graph
+                    accepted_triplets = []
                     for line in written_lines:
                         m = _TRIPLET_LINE_RE.match(line)
                         if m:
-                            all_triplets.append({
+                            accepted_triplets.append((
+                                m.group(1).strip(), m.group(2).strip(),
+                                m.group(3).strip(), m.group(4).strip(),
+                            ))
+                            fact_dict = {
                                 "domain": m.group(1).strip(),
                                 "subject": m.group(2).strip(),
                                 "relation": m.group(3).strip(),
                                 "object": m.group(4).strip(),
                                 "raw": line,
-                            })
+                            }
+                            all_triplets.append(fact_dict)
+                            newly_generated_dicts.append(fact_dict)
+
+                    append_provenance_records(
+                        accepted_triplets,
+                        sources=web_sources,
+                        query=f"{topic} {question}",
+                        model_name=kg_model,
+                    )
 
                     time.sleep(2.0)  # Rate limit protection
 
             # Re-search with expanded graph
-            print(f"\n🔍 Re-searching expanded graph ({len(all_triplets)} total facts)...")
-            local_results = search_local_kg(topics, all_triplets)
-            print(f"   Found {len(local_results)} relevant facts after expansion.")
-        else:
-            print(f"   ✅ All topics have sufficient local coverage. No expansion needed.")
+            local_results, local_confidence = retrieve_ranked_facts(question, topics, all_triplets)
+
+            # GUARANTEE: Force newly generated facts into the context even if keyword matching fails
+            for gen_fact in newly_generated_dicts:
+                if gen_fact not in local_results:
+                    local_results.append(gen_fact)
 
         # ── Step 3b: Intelligent Code Vault (70B Evaluates) ──
         vault_files_created = 0
         vault_path = None  # Will be set if code evaluation identifies a vault target
-        print(f"\n🧐 Evaluating if implementation is needed... [70B Groq]")
         needs_code, detected_lang, detected_flavor, concept_name = evaluate_code_need(question, topics, groq_client, kg_model)
 
         if needs_code:
             primary_topic = concept_name
-            
+
             if primary_topic:
                 safe_primary = primary_topic
                 ext = _LANG_EXT_MAP.get(detected_lang.lower(), ".txt")
-                
+
                 if detected_flavor:
                     safe_flavor = re.sub(r"[^A-Za-z0-9]", "", detected_flavor.capitalize())
                     vault_path = os.path.join(BASE_DIR, "codevault", detected_lang.lower(), f"{safe_primary}_{safe_flavor}{ext}")
@@ -940,11 +1300,9 @@ def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MOD
                     # Ensure the hasContextFile triplet is searchable for hydration
                     local_results = search_local_kg(topics, all_triplets)
         else:
-            print(f"   → NO — No implementation needed for this question.")
+            pass
 
         # ── Step 4: Hydrate Code Vault & Synthesize Answer (Local 3B) ──
-        print(f"\n💬 Synthesizing answer from {len(local_results)} facts... [Local 3B]")
-        
         # Hydrate Code Vaults
         file_contexts = []
         raw_code_blocks = []  # Keep track of raw code to append to final answer
@@ -962,11 +1320,10 @@ def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MOD
                             raw_code_blocks.append((os.path.basename(filepath), content))
                             if filepath.endswith(".py"):
                                 vault_python_paths.append(filepath)
-                            print(f"   📂 Attached Vault File: {os.path.basename(filepath)}")
                     except Exception as e:
-                        print(f"   ⚠️ Could not read vault file {filepath}: {e}")
+                        pass
                 else:
-                    print(f"   ⚠️ Vault file not found: {filepath}")
+                    pass
 
         # Fallback: if Code Vault evaluation identified a Python vault file but KG search
         # didn't find the hasContextFile triplet (topic name mismatch), inject it directly.
@@ -980,49 +1337,46 @@ def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MOD
                         raw_code_blocks.append((os.path.basename(vault_path), content))
                         if vault_path.endswith(".py"):
                             vault_python_paths.append(vault_path)
-                        print(f"   📂 Directly attached Vault File: {os.path.basename(vault_path)}")
                 except Exception as e:
-                    print(f"   ⚠️ Could not read vault file {vault_path}: {e}")
+                    pass
 
         # ── Step 4b: Code Execution (Interpreter Pattern) ──
         execution_output = ""
         if vault_python_paths and needs_code:
-            print(f"\n⚡ Checking if code execution is appropriate... [70B Groq]")
             time.sleep(1.0)  # Rate limit
             if should_execute_code(question, concept_name, groq_client, kg_model):
                 for py_path in vault_python_paths:
-                    print(f"   🚀 Executing: {os.path.basename(py_path)}...")
                     success, output = execute_code_safely(py_path)
                     if success:
-                        print(f"   ✅ Execution succeeded!")
-                        print(f"   📤 Output: {output[:200]}{'...' if len(output) > 200 else ''}")
                         execution_output += f"[{os.path.basename(py_path)}]:\n{output}\n"
                     else:
-                        print(f"   ❌ Execution failed: {output[:200]}")
                         execution_output += f"[{os.path.basename(py_path)} — FAILED]:\n{output}\n"
-            else:
-                print(f"   → Execution not needed — user wants the source code, not program output.")
 
         answer = synthesize_answer_local(question, local_results, file_contexts, local_tokenizer, local_model, execution_output, needs_code)
 
+        provenance_index = load_provenance_index()
+        print_evidence(local_results, provenance_index)
+        feedback_verdict = collect_answer_feedback(question, local_results, provenance_index)
 
         # Answer was already streamed to the terminal by synthesize_answer_local.
         # No need to print it again.
         exec_status = ""
         if execution_output:
             exec_status = " | ⚡ code executed"
-        print(f"   📊 Stats: {len(local_results)} facts | {len(file_contexts)} vault files | {new_facts_generated} new facts generated | {len(all_triplets)} total in graph{exec_status}")
+        print(f"   📊 Stats ({data_source}): {len(local_results)} facts | {len(file_contexts)} vault files | {new_facts_generated} new facts generated | {len(all_triplets)} total in graph{exec_status}")
 
     # Cleanup
     del local_model
-    torch.cuda.empty_cache()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     gc.collect()
 
 
 def main():
     parser = argparse.ArgumentParser(description="Agentic RAG Pipeline — Dual-Model Knowledge Graph")
-    parser.add_argument("--kg-model", type=str, default=KG_MODEL, help="Groq model for topic extraction & fact generation")
+    parser.add_argument("--kg-model", type=str, default=KG_MODEL, help="Groq model for topic extraction and fact generation")
     parser.add_argument("--local-model", type=str, default=LOCAL_ANSWER_MODEL, help="Path to local 3B model for answer synthesis")
+    parser.add_argument("--runtime", choices=["auto", "gpu-4bit", "cpu-int8"], default="auto", help="Quantized local runtime (default: auto-detect Windows hardware)")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -1030,7 +1384,7 @@ def main():
         format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
     )
 
-    run_agent(kg_model=args.kg_model, local_model_path=args.local_model)
+    run_agent(kg_model=args.kg_model, local_model_path=args.local_model, runtime=args.runtime)
 
 
 if __name__ == "__main__":
