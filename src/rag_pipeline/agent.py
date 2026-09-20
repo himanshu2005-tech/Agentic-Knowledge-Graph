@@ -13,6 +13,12 @@ import os
 import re
 import gc
 import sys
+if sys.stdout.encoding.lower() != 'utf-8':
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+import sys
 import time
 import json
 import hashlib
@@ -854,18 +860,7 @@ def append_feedback_record(
 
 
 def collect_answer_feedback(question: str, facts: list[dict], provenance_index: dict[str, dict]) -> str | None:
-    """Collect optional human judgement immediately after an answer is shown."""
-    try:
-        choice = input("\nWas this answer [c]orrect, [i]ncorrect, [n]complete, or [s]kip? ").strip().lower()
-    except (EOFError, KeyboardInterrupt):
-        return None
-    verdicts = {"c": "correct", "i": "incorrect", "n": "incomplete"}
-    if choice not in verdicts:
-        return None
-    note = input("Optional feedback note (press Enter to skip): ").strip()
-    append_feedback_record(question, verdicts[choice], note, facts, provenance_index)
-    return verdicts[choice]
-
+    return None
 
 def append_triplets_to_file(triplets: list[tuple], filepath: str, existing_keys: set = None) -> list[str]:
     """Append new triplets to a knowledge base file, skipping duplicates. Creates parent dirs if needed."""
@@ -992,7 +987,7 @@ def load_local_model(model_path: str, runtime: str = "auto"):
     """Load the local 3B model with 4-bit quantization for answer synthesis."""
     selected_runtime, hardware_note = select_windows_runtime(runtime)
     print(f"   Hardware: {hardware_note}")
-    print(f"\n🔧 Loading local answer model from: {model_path}")
+    print(f"\n[Model] Loading local answer model from: {model_path}")
     print(f"   (Please be patient! Moving 3 Billion parameters into GPU VRAM takes 10-20 seconds. Do not press Ctrl+C...)")
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True,
                                                clean_up_tokenization_spaces=False)
@@ -1171,206 +1166,172 @@ def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MOD
     print(f"\nType your question and press Enter. Type 'quit' or 'exit' to stop.\n")
     print("-" * 70)
 
-    while True:
-        try:
-            question = input("\n🧠 You: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\n\nGoodbye!")
-            break
+def answer_with_rag(question: str, groq_client: Groq, kg_model: str, local_tokenizer, local_model, all_triplets: list[dict], existing_keys: set) -> str:
+    """Run a single question through the full RAG pipeline and return the answer."""
+    # ── Step 1: Extract Topics (70B via Groq) ──
+    topics = extract_topics_from_question(question, groq_client, kg_model)
 
-        if not question:
-            continue
-        if question.lower() in ("quit", "exit", "q"):
-            print("\nGoodbye!")
-            break
+    time.sleep(1.0)  # Rate limit
 
-        # ── Step 1: Extract Topics (70B via Groq) ──
-        topics = extract_topics_from_question(question, groq_client, kg_model)
+    # ── Step 2: Search Local Graph ──
+    local_results, local_confidence = retrieve_ranked_facts(question, topics, all_triplets)
+    print(f"   Local retrieval confidence: {local_confidence:.0%}")
 
-        time.sleep(1.0)  # Rate limit
+    # ── Step 3: On-Demand Expansion (70B via Groq) ──
+    new_facts_generated = 0
+    topics_needing_expansion = []
+    data_source = "[Local Graph]"
 
-        # ── Step 2: Search Local Graph ──
+    if local_confidence < 0.60:
+        topics_needing_expansion = topics
+
+    if topics_needing_expansion:
+        newly_generated_dicts = []
+        for topic in topics_needing_expansion:
+            web_sources = []
+            search_ctx = ""
+            new_triplets = generate_new_triplets(topic, groq_client, kg_model, user_question=question)
+            data_source = "[120B LLM]"
+            if not new_triplets and os.environ.get("TAVILY_API_KEY"):
+                search_ctx, web_sources = search_tavily(f"{topic} {question}")
+                if web_sources:
+                    new_triplets = generate_new_triplets(
+                        topic, groq_client, kg_model, user_question=question, search_context=search_ctx
+                    )
+                    data_source = "[Web + 120B LLM]"
+            if new_triplets:
+                written_lines = append_triplets_to_file(new_triplets, RAG_KB_FILE, existing_keys)
+                new_facts_generated += len(written_lines)
+
+                accepted_triplets = []
+                for line in written_lines:
+                    m = _TRIPLET_LINE_RE.match(line)
+                    if m:
+                        accepted_triplets.append((
+                            m.group(1).strip(), m.group(2).strip(),
+                            m.group(3).strip(), m.group(4).strip(),
+                        ))
+                        fact_dict = {
+                            "domain": m.group(1).strip(),
+                            "subject": m.group(2).strip(),
+                            "relation": m.group(3).strip(),
+                            "object": m.group(4).strip(),
+                            "raw": line,
+                        }
+                        all_triplets.append(fact_dict)
+                        newly_generated_dicts.append(fact_dict)
+
+                append_provenance_records(
+                    accepted_triplets,
+                    sources=web_sources,
+                    query=f"{topic} {question}",
+                    model_name=kg_model,
+                )
+                time.sleep(2.0)
+
         local_results, local_confidence = retrieve_ranked_facts(question, topics, all_triplets)
-        print(f"   Local retrieval confidence: {local_confidence:.0%}")
+        for gen_fact in newly_generated_dicts:
+            if gen_fact not in local_results:
+                local_results.append(gen_fact)
 
-        # ── Step 3: On-Demand Expansion (70B via Groq) ──
-        new_facts_generated = 0
-        topics_needing_expansion = []
-        data_source = "[Local Graph]"
+    # ── Step 3b: Intelligent Code Vault (70B Evaluates) ──
+    vault_files_created = 0
+    vault_path = None
+    needs_code, detected_lang, detected_flavor, concept_name = evaluate_code_need(question, topics, groq_client, kg_model)
 
-        if local_confidence < 0.60:
-            topics_needing_expansion = topics
+    if needs_code:
+        primary_topic = concept_name
+        if primary_topic:
+            safe_primary = primary_topic
+            ext = _LANG_EXT_MAP.get(detected_lang.lower(), ".txt")
+            if detected_flavor:
+                safe_flavor = re.sub(r"[^A-Za-z0-9]", "", detected_flavor.capitalize())
+                vault_path = os.path.join(BASE_DIR, "codevault", detected_lang.lower(), f"{safe_primary}_{safe_flavor}{ext}")
+                print_flavor = f" ({detected_flavor.capitalize()})"
+            else:
+                vault_path = os.path.join(BASE_DIR, "codevault", detected_lang.lower(), f"{safe_primary}{ext}")
+                print_flavor = ""
 
-        if topics_needing_expansion:
-            newly_generated_dicts = []
-            for topic in topics_needing_expansion:
-                # Ask the 120B model from its own knowledge first. Web search is
-                # only used as a fallback when that produces no valid triplets.
-                web_sources = []
-                search_ctx = ""
-                new_triplets = generate_new_triplets(topic, groq_client, kg_model, user_question=question)
-                data_source = "[120B LLM]"
-                if not new_triplets and os.environ.get("TAVILY_API_KEY"):
-                    search_ctx, web_sources = search_tavily(f"{topic} {question}")
-                    if web_sources:
-                        new_triplets = generate_new_triplets(
-                            topic, groq_client, kg_model, user_question=question, search_context=search_ctx
-                        )
-                        data_source = "[Web + 120B LLM]"
-                if new_triplets:
-                    # Write to the SEPARATE RAG file (not the crawler's file!)
-                    written_lines = append_triplets_to_file(new_triplets, RAG_KB_FILE, existing_keys)
-                    new_facts_generated += len(written_lines)
+            skip_generation = False
+            if os.path.exists(vault_path):
+                # Auto-skip during evaluation if it exists
+                skip_generation = True
 
-                    # Add only deduplicated ones to in-memory graph
-                    accepted_triplets = []
-                    for line in written_lines:
-                        m = _TRIPLET_LINE_RE.match(line)
-                        if m:
-                            accepted_triplets.append((
-                                m.group(1).strip(), m.group(2).strip(),
-                                m.group(3).strip(), m.group(4).strip(),
-                            ))
-                            fact_dict = {
-                                "domain": m.group(1).strip(),
-                                "subject": m.group(2).strip(),
-                                "relation": m.group(3).strip(),
-                                "object": m.group(4).strip(),
-                                "raw": line,
-                            }
-                            all_triplets.append(fact_dict)
-                            newly_generated_dicts.append(fact_dict)
+            if not skip_generation:
+                vault_files_created = generate_code_for_vault(
+                    primary_topic, question, detected_lang, detected_flavor, groq_client, kg_model,
+                    existing_keys, all_triplets
+                )
+                if vault_files_created:
+                    local_results, _ = retrieve_ranked_facts(question, topics, all_triplets)
+                time.sleep(2.0)
+            else:
+                local_results, _ = retrieve_ranked_facts(question, topics, all_triplets)
+    else:
+        pass
 
-                    append_provenance_records(
-                        accepted_triplets,
-                        sources=web_sources,
-                        query=f"{topic} {question}",
-                        model_name=kg_model,
-                    )
-
-                    time.sleep(2.0)  # Rate limit protection
-
-            # Re-search with expanded graph
-            local_results, local_confidence = retrieve_ranked_facts(question, topics, all_triplets)
-
-            # GUARANTEE: Force newly generated facts into the context even if keyword matching fails
-            for gen_fact in newly_generated_dicts:
-                if gen_fact not in local_results:
-                    local_results.append(gen_fact)
-
-        # ── Step 3b: Intelligent Code Vault (70B Evaluates) ──
-        vault_files_created = 0
-        vault_path = None  # Will be set if code evaluation identifies a vault target
-        needs_code, detected_lang, detected_flavor, concept_name = evaluate_code_need(question, topics, groq_client, kg_model)
-
-        if needs_code:
-            primary_topic = concept_name
-
-            if primary_topic:
-                safe_primary = primary_topic
-                ext = _LANG_EXT_MAP.get(detected_lang.lower(), ".txt")
-
-                if detected_flavor:
-                    safe_flavor = re.sub(r"[^A-Za-z0-9]", "", detected_flavor.capitalize())
-                    vault_path = os.path.join(BASE_DIR, "codevault", detected_lang.lower(), f"{safe_primary}_{safe_flavor}{ext}")
-                    print_flavor = f" ({detected_flavor.capitalize()})"
-                else:
-                    vault_path = os.path.join(BASE_DIR, "codevault", detected_lang.lower(), f"{safe_primary}{ext}")
-                    print_flavor = ""
-
-                # ── Interactive Overwrite Prompt ──
-                skip_generation = False
-                if os.path.exists(vault_path):
-                    ans = input(f"   ⚠️ Vault file '{os.path.basename(vault_path)}' already exists. Overwrite? (y/n): ").strip().lower()
-                    if ans != 'y':
-                        print(f"   → Skipping generation. Using existing file.")
-                        skip_generation = True
-
-                if not skip_generation:
-                    print(f"   → YES — Generating {detected_lang.upper()} Code Vault for '{primary_topic}'{print_flavor}...")
-                    vault_files_created = generate_code_for_vault(
-                        primary_topic, question, detected_lang, detected_flavor, groq_client, kg_model,
-                        existing_keys, all_triplets
-                    )
-                    if vault_files_created:
-                        # Re-search so the hasContextFile triplet is picked up
-                        local_results = search_local_kg(topics, all_triplets)
-                    time.sleep(2.0)
-                else:
-                    # Ensure the hasContextFile triplet is searchable for hydration
-                    local_results = search_local_kg(topics, all_triplets)
-        else:
-            pass
-
-        # ── Step 4: Hydrate Code Vault & Synthesize Answer (Local 3B) ──
-        # Hydrate Code Vaults
-        file_contexts = []
-        raw_code_blocks = []  # Keep track of raw code to append to final answer
-        vault_python_paths = []  # Track Python vault files for potential execution
-        for t in local_results:
-            if t["relation"].lower() == "hascontextfile":
-                filepath = t["object"]
-                if os.path.exists(filepath):
-                    try:
-                        with open(filepath, 'r', encoding='utf-8') as f:
-                            content = f.read()
-                            # Truncate to ~1500 chars to avoid memory overflow on 3B model
-                            truncated_content = content[:1500] + ("\n...[TRUNCATED]" if len(content) > 1500 else "")
-                            file_contexts.append(f"--- FILE: {filepath} ---\n{truncated_content}\n")
-                            raw_code_blocks.append((os.path.basename(filepath), content))
-                            if filepath.endswith(".py"):
-                                vault_python_paths.append(filepath)
-                    except Exception as e:
-                        pass
-                else:
-                    pass
-
-        # Fallback: if Code Vault evaluation identified a Python vault file but KG search
-        # didn't find the hasContextFile triplet (topic name mismatch), inject it directly.
-        if needs_code and vault_path is not None and os.path.exists(vault_path):
-            if vault_path not in [t["object"] for t in local_results if t["relation"].lower() == "hascontextfile"]:
+    # ── Step 4: Hydrate Code Vault & Synthesize Answer (Local 3B) ──
+    file_contexts = []
+    raw_code_blocks = []
+    vault_python_paths = []
+    for t in local_results:
+        if t["relation"].lower() == "hascontextfile":
+            filepath = t["object"]
+            if os.path.exists(filepath):
                 try:
-                    with open(vault_path, 'r', encoding='utf-8') as f:
+                    with open(filepath, 'r', encoding='utf-8') as f:
                         content = f.read()
                         truncated_content = content[:1500] + ("\n...[TRUNCATED]" if len(content) > 1500 else "")
-                        file_contexts.append(f"--- FILE: {vault_path} ---\n{truncated_content}\n")
-                        raw_code_blocks.append((os.path.basename(vault_path), content))
-                        if vault_path.endswith(".py"):
-                            vault_python_paths.append(vault_path)
+                        file_contexts.append(f"--- FILE: {filepath} ---\n{truncated_content}\n")
+                        raw_code_blocks.append((os.path.basename(filepath), content))
+                        if filepath.endswith(".py"):
+                            vault_python_paths.append(filepath)
                 except Exception as e:
                     pass
 
-        # ── Step 4b: Code Execution (Interpreter Pattern) ──
-        execution_output = ""
-        if vault_python_paths and needs_code:
-            time.sleep(1.0)  # Rate limit
-            if should_execute_code(question, concept_name, groq_client, kg_model):
-                for py_path in vault_python_paths:
-                    success, output = execute_code_safely(py_path)
-                    if success:
-                        execution_output += f"[{os.path.basename(py_path)}]:\n{output}\n"
-                    else:
-                        execution_output += f"[{os.path.basename(py_path)} — FAILED]:\n{output}\n"
+    if needs_code and vault_path is not None and os.path.exists(vault_path):
+        if vault_path not in [t["object"] for t in local_results if t["relation"].lower() == "hascontextfile"]:
+            try:
+                with open(vault_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    truncated_content = content[:1500] + ("\n...[TRUNCATED]" if len(content) > 1500 else "")
+                    file_contexts.append(f"--- FILE: {vault_path} ---\n{truncated_content}\n")
+                    raw_code_blocks.append((os.path.basename(vault_path), content))
+                    if vault_path.endswith(".py"):
+                        vault_python_paths.append(vault_path)
+            except Exception as e:
+                pass
 
-        answer = synthesize_answer_local(question, local_results, file_contexts, local_tokenizer, local_model, execution_output, needs_code)
+    # ── Step 4b: Code Execution (Interpreter Pattern) ──
+    execution_output = ""
+    if vault_python_paths and needs_code:
+        time.sleep(1.0)
+        if should_execute_code(question, concept_name, groq_client, kg_model):
+            for py_path in vault_python_paths:
+                success, output = execute_code_safely(py_path)
+                if success:
+                    execution_output += f"[{os.path.basename(py_path)}]:\n{output}\n"
+                else:
+                    execution_output += f"[{os.path.basename(py_path)} — FAILED]:\n{output}\n"
 
-        provenance_index = load_provenance_index()
-        print_evidence(local_results, provenance_index)
-        feedback_verdict = collect_answer_feedback(question, local_results, provenance_index)
+    answer = synthesize_answer_local(question, local_results, file_contexts, local_tokenizer, local_model, execution_output, needs_code)
 
-        # Answer was already streamed to the terminal by synthesize_answer_local.
-        # No need to print it again.
-        exec_status = ""
-        if execution_output:
-            exec_status = " | ⚡ code executed"
-        print(f"   📊 Stats ({data_source}): {len(local_results)} facts | {len(file_contexts)} vault files | {new_facts_generated} new facts generated | {len(all_triplets)} total in graph{exec_status}")
+    provenance_index = load_provenance_index()
+    print_evidence(local_results, provenance_index)
+    feedback_verdict = collect_answer_feedback(question, local_results, provenance_index)
+
+    exec_status = ""
+    if execution_output:
+        exec_status = " | ⚡ code executed"
+    print(f"   📊 Stats ({data_source}): {len(local_results)} facts | {len(file_contexts)} vault files | {new_facts_generated} new facts generated | {len(all_triplets)} total in graph{exec_status}")
+    
+    return answer
 
     # Cleanup
     del local_model
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     gc.collect()
-
 
 def main():
     parser = argparse.ArgumentParser(description="Agentic RAG Pipeline — Dual-Model Knowledge Graph")
@@ -1385,7 +1346,6 @@ def main():
     )
 
     run_agent(kg_model=args.kg_model, local_model_path=args.local_model, runtime=args.runtime)
-
 
 if __name__ == "__main__":
     main()

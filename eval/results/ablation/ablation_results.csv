@@ -1,0 +1,5 @@
+Ablation Variant,micro_f1,mean_latency_sec,groundedness
+full_system,0.85,23.3171329498291,1.0
+no_code_execution,0.85,15.781448483467102,1.0
+no_expansion,0.0,16.108591556549072,1.0
+single_model_70b,0.0,1.078048586845398,0.0

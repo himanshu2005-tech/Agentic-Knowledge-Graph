@@ -1,0 +1,122 @@
+[
+    {
+        "prompt": "What are the core components of the central dogma of molecular biology?",
+        "gold_triplets": [
+            ["Biology", "DNA", "transcribesTo", "RNA"],
+            ["Biology", "RNA", "translatesTo", "Protein"],
+            ["Biology", "MolecularBiology", "studies", "DNA"]
+        ]
+    },
+    {
+        "prompt": "Explain the role of mitochondria in a cell.",
+        "gold_triplets": [
+            ["Biology", "Mitochondria", "produces", "ATP"],
+            ["Biology", "Mitochondria", "isPartOf", "Cell"],
+            ["Biology", "Cell", "requires", "ATP"]
+        ]
+    },
+    {
+        "prompt": "How do vaccines build immunity?",
+        "gold_triplets": [
+            ["Biology", "Vaccine", "stimulates", "ImmuneSystem"],
+            ["Biology", "ImmuneSystem", "produces", "Antibodies"],
+            ["Biology", "Antibodies", "target", "Pathogens"]
+        ]
+    },
+    {
+        "prompt": "What is photosynthesis and who does it?",
+        "gold_triplets": [
+            ["Biology", "Plants", "perform", "Photosynthesis"],
+            ["Biology", "Photosynthesis", "produces", "Oxygen"],
+            ["Biology", "Photosynthesis", "requires", "Sunlight"]
+        ]
+    },
+    {
+        "prompt": "What is the function of red blood cells?",
+        "gold_triplets": [
+            ["Biology", "RedBloodCells", "transport", "Oxygen"],
+            ["Biology", "RedBloodCells", "contain", "Hemoglobin"],
+            ["Biology", "BoneMarrow", "produces", "RedBloodCells"]
+        ]
+    },
+    {
+        "prompt": "Explain Object-Oriented Programming (OOP) inheritance.",
+        "gold_triplets": [
+            ["ComputerScience", "ChildClass", "inheritsFrom", "ParentClass"],
+            ["ComputerScience", "OOP", "includes", "Inheritance"],
+            ["ComputerScience", "Inheritance", "enables", "CodeReuse"]
+        ]
+    },
+    {
+        "prompt": "What is a REST API?",
+        "gold_triplets": [
+            ["ComputerScience", "RESTAPI", "uses", "HTTP"],
+            ["ComputerScience", "RESTAPI", "supports", "JSON"],
+            ["ComputerScience", "Client", "requestsFrom", "RESTAPI"]
+        ]
+    },
+    {
+        "prompt": "How does a hash table work?",
+        "gold_triplets": [
+            ["ComputerScience", "HashTable", "stores", "KeyValuePairs"],
+            ["ComputerScience", "HashTable", "uses", "HashFunction"],
+            ["ComputerScience", "HashFunction", "computes", "Index"]
+        ]
+    },
+    {
+        "prompt": "What is the purpose of Docker?",
+        "gold_triplets": [
+            ["ComputerScience", "Docker", "creates", "Containers"],
+            ["ComputerScience", "Containers", "isolate", "Applications"],
+            ["ComputerScience", "Docker", "solves", "DependencyIssues"]
+        ]
+    },
+    {
+        "prompt": "Who invented the Python programming language?",
+        "gold_triplets": [
+            ["ComputerScience", "GuidoVanRossum", "created", "Python"],
+            ["ComputerScience", "Python", "isA", "ProgrammingLanguage"],
+            ["ComputerScience", "Python", "supports", "OOP"]
+        ]
+    },
+    {
+        "prompt": "What is the theory of general relativity?",
+        "gold_triplets": [
+            ["Physics", "AlbertEinstein", "developed", "GeneralRelativity"],
+            ["Physics", "GeneralRelativity", "describes", "Gravity"],
+            ["Physics", "Gravity", "curves", "Spacetime"]
+        ]
+    },
+    {
+        "prompt": "Explain Newton's second law of motion.",
+        "gold_triplets": [
+            ["Physics", "IsaacNewton", "formulated", "SecondLawOfMotion"],
+            ["Physics", "Force", "equals", "MassTimesAcceleration"],
+            ["Physics", "SecondLawOfMotion", "calculates", "Force"]
+        ]
+    },
+    {
+        "prompt": "What is quantum entanglement?",
+        "gold_triplets": [
+            ["Physics", "QuantumMechanics", "studies", "Entanglement"],
+            ["Physics", "EntangledParticles", "affect", "EachOther"],
+            ["Physics", "Entanglement", "defies", "ClassicalPhysics"]
+        ]
+    },
+    {
+        "prompt": "How does a nuclear reactor work?",
+        "gold_triplets": [
+            ["Physics", "NuclearReactor", "uses", "NuclearFission"],
+            ["Physics", "NuclearFission", "generates", "Heat"],
+            ["Physics", "Heat", "produces", "Electricity"]
+        ]
+    },
+    {
+        "prompt": "What is the speed of light in a vacuum?",
+        "gold_triplets": [
+            ["Physics", "SpeedOfLight", "isA", "Constant"],
+            ["Physics", "Vacuum", "allows", "SpeedOfLight"],
+            ["Physics", "SpeedOfLight", "limits", "InformationTransfer"]
+        ]
+    }
+]
