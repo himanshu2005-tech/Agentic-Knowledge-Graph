@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+*.pyc
+.env
+local_qwen_3b
+local_llama_3b
+local_gemma_2_2b_it
+eval
+tests
+codevault
+data/kg

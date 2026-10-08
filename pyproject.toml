@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-knowledge-graph"
+version = "1.0.0"
+description = "Local-first, evidence-aware knowledge graph RAG pipeline"
+requires-python = ">=3.11"
+dependencies = [
+  "groq>=1.0.0",
+  "python-dotenv>=1.0,<2",
+  "transformers>=4.40,<5",
+  "torch>=2.3,<3",
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.32,<1",
+  "neo4j>=5.25,<6",
+  "pydantic>=2.7,<3",
+  "pydantic-settings>=2.6,<3",
+  "prometheus-client>=0.21,<1",
+  "sentence-transformers>=3.2,<4",
+  "nltk>=3.9,<4",
+  "flashtext>=2.7,<3",
+  "networkx>=3.2,<4",
+]
+
+[project.optional-dependencies]
+gpu = ["bitsandbytes>=0.42"]
+dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.8"]
+
+[project.scripts]
+rag-agent = "src.rag_pipeline.agent:main"
+rag-migrate-neo4j = "src.rag_pipeline.migrate:main"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

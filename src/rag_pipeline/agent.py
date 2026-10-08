@@ -27,10 +27,12 @@ import subprocess
 import argparse
 import threading
 import ctypes
+from difflib import SequenceMatcher
 from datetime import datetime, timezone
 import torch
 from dotenv import load_dotenv
 import requests
+from urllib.parse import urlparse
 from groq import Groq
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, TextIteratorStreamer
 
@@ -245,13 +247,136 @@ def print_evidence(facts: list[dict], provenance_index: dict[str, dict]) -> None
 #  TOOL 1.5: TAVILY WEB SEARCH
 # ══════════════════════════════════════════════════════════════════════
 
-def search_tavily(query: str) -> tuple[str, list[dict]]:
+_WEB_STOPWORDS = {
+    "about", "and", "are", "does", "for", "from", "has", "have", "her", "his",
+    "how", "into", "its", "the", "their", "this", "was", "what", "when", "where",
+    "which", "who", "with", "qualifications", "details", "information",
+    "official", "profile", "biography",
+}
+
+_LOCATION_QUALIFIERS = {
+    "chennai", "coimbatore", "amritapuri", "bengaluru", "bangalore", "kochi",
+    "mysore", "amaravati", "faridabad", "nagercoil", "haridwar", "hyderabad",
+}
+
+
+def _web_tokens(value: str) -> set[str]:
+    tokens = {
+        token.lower()
+        for token in re.findall(r"[A-Z]+(?=[A-Z][a-z]|\d|\b)|[A-Z]?[a-z]+|\d+", value)
+        if len(token) > 2 and token.lower() not in _WEB_STOPWORDS
+    }
+    compact = re.sub(r"[^a-z0-9]", "", value.lower())
+    for abbreviation in ("phd", "mtech", "btech"):
+        if abbreviation in compact:
+            tokens.add(abbreviation)
+    return tokens
+
+
+def _token_coverage(required: set[str], available: set[str]) -> float:
+    """Coverage with conservative typo tolerance for named entities."""
+    if not required:
+        return 0.0
+    matched = sum(
+        any(
+            token == candidate
+            or (len(token) >= 6 and len(candidate) >= 6 and SequenceMatcher(None, token, candidate).ratio() >= 0.82)
+            for candidate in available
+        )
+        for token in required
+    )
+    return matched / len(required)
+
+
+def _source_authority(url: str) -> float:
+    """Prefer first-party, academic, government, and standards sources."""
+    host = (urlparse(url).hostname or "").lower().removeprefix("www.")
+    if host.endswith("academia.edu"):
+        return 0.45
+    if host.endswith((".gov", ".gov.in", ".ac.in", ".edu")):
+        return 1.0
+    if host in {"amrita.edu", "jntuh.ac.in", "ieee.org", "acm.org"}:
+        return 1.0
+    if host.endswith(("wikipedia.org", "britannica.com")):
+        return 0.65
+    return 0.35
+
+
+def rank_web_sources(query: str, raw_results: list[dict], limit: int = 6) -> list[dict]:
+    """Filter irrelevant search hits and rank first-party evidence above aggregators."""
+    query_tokens = _web_tokens(query)
+    required_locations = query_tokens.intersection(_LOCATION_QUALIFIERS)
+    quoted_tokens = _web_tokens(" ".join(re.findall(r'["“”]([^"“”]+)["“”]', query)))
+    ranked: list[tuple[float, dict]] = []
+    seen_urls: set[str] = set()
+    for result in raw_results:
+        source_url = (result.get("url") or "").strip()
+        content = (result.get("content") or "").strip()
+        if not source_url or not content or source_url in seen_urls:
+            continue
+        seen_urls.add(source_url)
+        searchable = f"{result.get('title') or ''} {content}"
+        source_tokens = _web_tokens(searchable)
+        if required_locations and not required_locations.issubset(source_tokens):
+            continue
+        if len(quoted_tokens) >= 2:
+            identity_coverage = _token_coverage(quoted_tokens, source_tokens)
+            if identity_coverage < 0.80:
+                continue
+        overlap = len(query_tokens & source_tokens) / max(len(query_tokens), 1)
+        provider_score = float(result.get("score") or 0.0)
+        # Require meaningful query overlap; generic pages must not ground a person.
+        if query_tokens and overlap < 0.40:
+            continue
+        combined = 0.50 * provider_score + 0.30 * overlap + 0.20 * _source_authority(source_url)
+        ranked.append((combined, {
+            "id": 0,
+            "title": (result.get("title") or source_url).strip(),
+            "url": source_url,
+            "content": content[:5000],
+            "score": round(combined, 4),
+            "provider_score": result.get("score"),
+            "authority_score": _source_authority(source_url),
+            "query_overlap": round(overlap, 4),
+        }))
+    ranked.sort(key=lambda item: item[0], reverse=True)
+    if len(quoted_tokens) >= 2 and any(item[1]["authority_score"] >= 0.95 for item in ranked):
+        ranked = [item for item in ranked if item[1]["authority_score"] >= 0.65]
+    sources = [source for _, source in ranked[:limit]]
+    for index, source in enumerate(sources, start=1):
+        source["id"] = index
+    return sources
+
+
+def select_relevant_sources(subject: str, obj: str, sources: list[dict]) -> list[dict]:
+    """Return only sources that mention both sides of a proposed fact."""
+    subject_tokens = _web_tokens(subject)
+    object_tokens = _web_tokens(obj)
+    relevant = []
+    for source in sources:
+        source_tokens = _web_tokens(f"{source.get('title', '')} {source.get('content', '')}")
+        subject_coverage = _token_coverage(subject_tokens, source_tokens)
+        object_coverage = _token_coverage(object_tokens, source_tokens)
+        if subject_coverage >= 0.60 and object_coverage >= 0.60:
+            relevant.append(source)
+    return relevant
+
+
+def filter_grounded_triplets(triplets: list[tuple], sources: list[dict]) -> list[tuple]:
+    """Reject extracted facts that cannot be traced to a supplied search result."""
+    return [
+        triplet for triplet in triplets
+        if len(triplet) == 4 and select_relevant_sources(triplet[1], triplet[3], sources)
+    ]
+
+
+def search_tavily(query: str, api_key: str | None = None) -> tuple[str, list[dict]]:
     """Fetch web evidence and retain its URLs for fact-level provenance.
 
     The text context is for the LLM; the structured source list is persisted with
     every fact accepted from this web-grounded generation pass.
     """
-    api_key = os.environ.get("TAVILY_API_KEY")
+    api_key = api_key or os.environ.get("TAVILY_API_KEY")
     if not api_key:
         return "", []
 
@@ -262,26 +387,24 @@ def search_tavily(query: str) -> tuple[str, list[dict]]:
         "query": query,
         "search_depth": "advanced",
         "include_answer": False,
-        "max_results": 5
+        "max_results": 10,
+        "include_raw_content": False,
     }
 
     try:
         response = requests.post(url, json=data, headers=headers, timeout=10)
         response.raise_for_status()
         raw_results = response.json().get("results", [])
-        sources = []
-        for index, result in enumerate(raw_results, start=1):
-            source_url = (result.get("url") or "").strip()
-            content = (result.get("content") or "").strip()
-            if not source_url or not content:
-                continue
-            sources.append({
-                "id": index,
-                "title": (result.get("title") or source_url).strip(),
-                "url": source_url,
-                "content": content,
-                "score": result.get("score"),
-            })
+        sources = rank_web_sources(query, raw_results)
+        # Exact quoted names can fail on a one-character typo. Retry unquoted so
+        # the provider can autocorrect, then reapply our strict identity filter.
+        if not sources and '"' in query:
+            fallback_query = query.replace('"', "")
+            fallback_data = {**data, "query": fallback_query}
+            fallback_response = requests.post(url, json=fallback_data, headers=headers, timeout=10)
+            fallback_response.raise_for_status()
+            raw_results.extend(fallback_response.json().get("results", []))
+            sources = rank_web_sources(query, raw_results)
         context = "\n\n".join(
             f"[source={source['id']}] {source['title']}\nURL: {source['url']}\n{source['content']}"
             for source in sources
@@ -361,7 +484,7 @@ Topic: {topic}
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=1,
-                max_completion_tokens=500,
+                max_completion_tokens=1200,
                 top_p=1,
                 reasoning_effort="low",
                 stream=False,
@@ -722,16 +845,8 @@ def _fact_id(domain: str, subject: str, relation: str, obj: str) -> str:
 
 
 def _select_relevant_sources(subject: str, obj: str, sources: list[dict]) -> list[dict]:
-    """Keep sources mentioning a triple entity; fall back to all supplied evidence."""
-    entity_terms = {
-        token.lower() for token in re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)|\d+", f"{subject} {obj}")
-        if len(token) > 2
-    }
-    relevant = [
-        source for source in sources
-        if entity_terms.intersection((source["title"] + " " + source["content"]).lower().split())
-    ]
-    return relevant or sources
+    """Backward-compatible wrapper for strict fact-level evidence selection."""
+    return select_relevant_sources(subject, obj, sources)
 
 
 def append_provenance_records(
@@ -753,6 +868,12 @@ def append_provenance_records(
     with open(filepath, "a", encoding="utf-8") as f:
         for domain, subject, relation, obj in triplets:
             matched_sources = _select_relevant_sources(subject, obj, sources)
+            if sources and not matched_sources:
+                logger.warning(
+                    "Skipping provenance for unsupported fact: %s %s %s",
+                    subject, relation, obj,
+                )
+                continue
             record = {
                 "schema_version": 1,
                 "fact_id": _fact_id(domain, subject, relation, obj),
@@ -1166,6 +1287,27 @@ def run_agent(kg_model: str = KG_MODEL, local_model_path: str = LOCAL_ANSWER_MOD
     print(f"\nType your question and press Enter. Type 'quit' or 'exit' to stop.\n")
     print("-" * 70)
 
+    while True:
+        try:
+            question = input("\n> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nExiting.")
+            break
+
+        if not question:
+            continue
+        if question.lower() in ("quit", "exit"):
+            print("Exiting.")
+            break
+
+        answer = answer_with_rag(question, groq_client, kg_model, local_tokenizer, local_model, all_triplets, existing_keys)
+        print(f"\n🗨️  {answer}\n")
+        print("-" * 70)
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
+
 def answer_with_rag(question: str, groq_client: Groq, kg_model: str, local_tokenizer, local_model, all_triplets: list[dict], existing_keys: set) -> str:
     """Run a single question through the full RAG pipeline and return the answer."""
     # ── Step 1: Extract Topics (70B via Groq) ──
@@ -1190,14 +1332,17 @@ def answer_with_rag(question: str, groq_client: Groq, kg_model: str, local_token
         for topic in topics_needing_expansion:
             web_sources = []
             search_ctx = ""
-            new_triplets = generate_new_triplets(topic, groq_client, kg_model, user_question=question)
-            data_source = "[120B LLM]"
-            if not new_triplets and os.environ.get("TAVILY_API_KEY"):
-                search_ctx, web_sources = search_tavily(f"{topic} {question}")
+            new_triplets = []
+            if os.environ.get("TAVILY_API_KEY"):
+                readable_topic = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", topic)
+                search_ctx, web_sources = search_tavily(
+                    f'"{readable_topic}" {question} official profile biography qualifications'
+                )
                 if web_sources:
                     new_triplets = generate_new_triplets(
                         topic, groq_client, kg_model, user_question=question, search_context=search_ctx
                     )
+                    new_triplets = filter_grounded_triplets(new_triplets, web_sources)
                     data_source = "[Web + 120B LLM]"
             if new_triplets:
                 written_lines = append_triplets_to_file(new_triplets, RAG_KB_FILE, existing_keys)
@@ -1326,12 +1471,6 @@ def answer_with_rag(question: str, groq_client: Groq, kg_model: str, local_token
     print(f"   📊 Stats ({data_source}): {len(local_results)} facts | {len(file_contexts)} vault files | {new_facts_generated} new facts generated | {len(all_triplets)} total in graph{exec_status}")
     
     return answer
-
-    # Cleanup
-    del local_model
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-    gc.collect()
 
 def main():
     parser = argparse.ArgumentParser(description="Agentic RAG Pipeline — Dual-Model Knowledge Graph")

@@ -3,3 +3,13 @@ python-dotenv==1.0.1
 transformers==4.40.2
 torch==2.3.0
 bitsandbytes==0.42.0
+fastapi>=0.115,<1
+uvicorn[standard]>=0.32,<1
+neo4j>=5.25,<6
+pydantic>=2.7,<3
+pydantic-settings>=2.6,<3
+prometheus-client>=0.21,<1
+sentence-transformers>=3.2,<4
+nltk>=3.9,<4
+flashtext>=2.7,<3
+networkx>=3.2,<4

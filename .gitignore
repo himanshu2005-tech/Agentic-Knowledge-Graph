@@ -19,17 +19,26 @@ local_llama_3b/
 local_gemma_2_2b_it/
 local_qwen_model/
 
-# Deprecated / Local Dev
+# Local development outputs
 .pytest_cache/
-tests/
 lib/
 
-# Ignore everything in src/ except our active agent pipeline
-src/*
-!src/rag_pipeline/
-src/rag_pipeline/*
-!src/rag_pipeline/agent.py
+# Runtime state
+data/rag/*.lock
+data/rag/*.tmp
+logs/
+.coverage
+htmlcov/
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
 
 # Keep data structure but ignore specific large DBs if needed
 # We will explicitly add data/rag/rag_knowledge.txt
 data/kg/knowledge_base.txt
+
+# Scratch/temp files
+*.bak
+*.egg-info/
+scratch_*.py
+madhu.js

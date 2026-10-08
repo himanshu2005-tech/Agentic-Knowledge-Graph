@@ -1,0 +1,31 @@
+question_id,category,question,Cloud 70B,Raw Local 3B,3B + Knowledge Graph
+1,Languages,Can you tell me who invented the python programming language??,1,1,1
+2,Languages,Can you tell me who invented javascript??,1,1,1
+3,Languages,Can you tell me who developed typescript??,1,0,1
+4,Languages,Can you tell me who developed the java programming language??,1,1,0
+5,Languages,Can you tell me who invented c++??,1,1,1
+6,Languages,Can you tell me who invented the rust programming language??,1,1,0
+7,Languages,Can you tell me who developed the swift programming language??,1,0,0
+8,Languages,Can you tell me who invented the ruby programming language??,1,1,0
+9,Languages,Can you tell me who developed the scala programming language??,1,1,1
+10,Languages,Can you tell me who developed the perl programming language??,1,1,0
+11,Languages,Can you tell me who invented the lua programming language??,1,0,1
+12,Languages,Can you tell me who developed the julia programming language??,1,1,0
+13,Languages,Can you tell me who developed the fortran programming language??,1,0,1
+14,Languages,Can you tell me who invented pascal??,1,0,1
+15,Languages,Can you tell me who developed prolog??,1,1,1
+16,Languages,Can you tell me who invented lisp??,1,1,1
+17,Languages,Can you tell me who developed clojure??,1,1,1
+18,Languages,Can you tell me who developed the f# programming language??,1,0,1
+19,Languages,Can you tell me who developed ocaml??,1,1,1
+20,Languages,Can you tell me who developed the bash shell??,1,0,1
+21,Languages,Can you tell me who developed the awk programming language??,1,0,1
+22,Languages,Can you tell me who developed sed??,1,0,0
+23,Languages,Can you tell me who developed matlab??,1,0,1
+24,Languages,Can you tell me who developed the scheme programming language??,1,1,1
+25,Sorting,Can you tell me who developed the bubblesort algorithm??,0,0,0
+26,Sorting,Can you tell me who developed the mergesort algorithm??,1,0,1
+27,Sorting,Can you tell me who developed quicksort??,1,1,1
+28,Sorting,Can you tell me who developed timsort??,1,1,0
+29,Graph algorithms,I am trying to understand something. What problem does Dijkstra's algorithm solve?,1,1,0
+30,Graph algorithms,I am trying to understand something. What problem does the Edmonds-Karp algorithm solve?,1,1,0
