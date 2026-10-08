@@ -97,6 +97,7 @@ The result is not merely a chatbot. It is a continuously growing, inspectable kn
 - Prometheus metrics, structured logging, health probes, and readiness checks.
 - Append-only feedback records.
 - Docker Compose configuration for Neo4j.
+- A canvas-rendered knowledge-base explorer with domain filters, search, zoom, pan, inspection, and server-side pagination.
 
 ## System architecture
 
@@ -347,6 +348,21 @@ The frontend provides:
 - An evidence panel with retrieved facts, scores, and source links.
 - Correct, incorrect, and incomplete feedback controls.
 - Responsive layouts for desktop and mobile displays.
+- A dedicated **Knowledge graph** workspace for visually exploring entities and relationships.
+
+### Scalable graph explorer
+
+Select **Knowledge graph** in the left navigation to open the visual explorer. The view supports:
+
+- Canvas rendering instead of one DOM element per node.
+- 100, 200, or 500 facts per page.
+- Server-side search, domain filtering, and pagination.
+- Domain-based spatial grouping and colors.
+- Mouse-wheel zoom and pointer-based panning.
+- Node and relationship inspection.
+- Fact confidence, verification status, and source count display.
+
+The complete knowledge base is never forced into the browser at once. In Neo4j mode, filtering, counting, ordering, and pagination are executed by the database. This bounded-slice design allows the same interface to remain usable as the graph grows well beyond the current dataset.
 
 Start the API in one PowerShell window. In a second window:
 
@@ -446,6 +462,23 @@ Stores a human judgement and the fact IDs involved in the answer.
 ```
 
 Allowed verdicts are `correct`, `incorrect`, and `incomplete`.
+
+### `GET /v1/graph`
+
+Returns a bounded visualization slice containing entity nodes, fact edges, domain statistics, and pagination metadata.
+
+| Parameter | Default | Limits | Purpose |
+|---|---:|---:|---|
+| `query` | empty | 200 characters | Filter by entity or relation text |
+| `domain` | empty | 100 characters | Restrict results to one domain |
+| `offset` | `0` | non-negative | Starting fact offset |
+| `limit` | `200` | 1–500 | Maximum facts in the returned slice |
+
+Example:
+
+```powershell
+Invoke-RestMethod "http://127.0.0.1:8000/v1/graph?domain=ComputerScience&limit=200"
+```
 
 ### Health and metrics
 

@@ -39,6 +39,20 @@ def test_file_store_preserves_source_metadata(tmp_path: Path):
     assert saved.sources[0].url == "https://example.com/evidence"
 
 
+def test_graph_page_is_filtered_paginated_and_reports_domains(tmp_path: Path):
+    store = FileKnowledgeStore(tmp_path / "facts.txt", tmp_path / "provenance.jsonl")
+    store.upsert_facts([
+        Fact("Programming", "GuidoVanRossum", "created", "Python"),
+        Fact("Programming", "BrendanEich", "created", "JavaScript"),
+        Fact("Science", "Earth", "orbits", "Sun"),
+    ])
+    facts, total, domains = store.graph_page(query="created", domain="Programming", offset=1, limit=1)
+    assert total == 2
+    assert len(facts) == 1
+    assert facts[0].subject == "GuidoVanRossum"
+    assert domains == [{"name": "Programming", "facts": 2}, {"name": "Science", "facts": 1}]
+
+
 def test_low_evidence_routes_to_expansion(tmp_path: Path):
     store = FileKnowledgeStore(tmp_path / "facts.txt", tmp_path / "provenance.jsonl")
     result = HybridRetriever(store, "unused", enable_embeddings=False).retrieve("Unknown subject")

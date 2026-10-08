@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -101,3 +101,17 @@ def chat(payload: ChatRequest, request: Request) -> dict:
 @app.post("/v1/feedback", status_code=201)
 def feedback(payload: FeedbackRequest, request: Request) -> dict:
     return service(request).submit_feedback(payload.question, payload.verdict, payload.note, payload.fact_ids)
+
+
+@app.get("/v1/graph")
+def graph_view(
+    request: Request,
+    query: str = Query(default="", max_length=200),
+    domain: str = Query(default="", max_length=100),
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=200, ge=1, le=500),
+) -> dict:
+    try:
+        return service(request).graph_view(query=query, domain=domain, offset=offset, limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Graph visualization failed") from exc

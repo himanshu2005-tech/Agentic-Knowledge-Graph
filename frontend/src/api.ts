@@ -1,4 +1,4 @@
-import type { ChatResponse, HealthResponse } from "./types";
+import type { ChatResponse, GraphResponse, HealthResponse } from "./types";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
 
@@ -16,6 +16,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<HealthResponse>("/health/ready"),
+  graph: (params: { query?: string; domain?: string; offset?: number; limit?: number }) => {
+    const search = new URLSearchParams();
+    if (params.query) search.set("query", params.query);
+    if (params.domain) search.set("domain", params.domain);
+    search.set("offset", String(params.offset || 0));
+    search.set("limit", String(params.limit || 200));
+    return request<GraphResponse>(`/v1/graph?${search.toString()}`);
+  },
   chat: (question: string) =>
     request<ChatResponse>("/v1/chat", {
       method: "POST",

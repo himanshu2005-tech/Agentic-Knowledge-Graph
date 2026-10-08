@@ -42,6 +42,37 @@ export type HealthResponse = {
   expansion_configured: boolean;
 };
 
+export type GraphNode = {
+  id: string;
+  label: string;
+  domains: string[];
+  degree: number;
+};
+
+export type GraphEdge = {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  domain: string;
+  confidence: number;
+  verification_status: string;
+  source_count: number;
+};
+
+export type GraphResponse = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  domains: { name: string; facts: number }[];
+  pagination: {
+    offset: number;
+    limit: number;
+    returned: number;
+    total_facts: number;
+    has_more: boolean;
+  };
+};
+
 export type Message = {
   id: string;
   role: "user" | "assistant";

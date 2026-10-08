@@ -1,8 +1,9 @@
-import { ArrowUp, LoaderCircle, Menu, PanelRightClose, PanelRightOpen, Plus, Sparkles } from "lucide-react";
+import { ArrowUp, LoaderCircle, Menu, MessageSquare, Network, PanelRightClose, PanelRightOpen, Plus, Sparkles } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { Brand } from "./components/Brand";
 import { EvidencePanel } from "./components/EvidencePanel";
+import { GraphExplorer } from "./components/GraphExplorer";
 import { MessageBubble } from "./components/MessageBubble";
 import { StatusPanel } from "./components/StatusPanel";
 import type { ChatResponse, HealthResponse, Message } from "./types";
@@ -25,6 +26,7 @@ export default function App() {
   const [sending, setSending] = useState(false);
   const [activeResult, setActiveResult] = useState<ChatResponse | null>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(true);
+  const [view, setView] = useState<"chat" | "graph">("chat");
   const endRef = useRef<HTMLDivElement>(null);
 
   const checkHealth = async () => {
@@ -75,10 +77,14 @@ export default function App() {
   const reset = () => { setMessages([]); setActiveResult(null); setQuestion(""); };
 
   return (
-    <div className={`app-shell ${evidenceOpen ? "with-evidence" : ""}`}>
+    <div className={`app-shell ${view === "chat" && evidenceOpen ? "with-evidence" : ""}`}>
       <nav className="sidebar">
         <Brand />
         <button className="new-thread" onClick={reset}><Plus size={16} />New thread</button>
+        <div className="view-switcher">
+          <button className={view === "chat" ? "active" : ""} onClick={() => setView("chat")}><MessageSquare size={15} />Assistant</button>
+          <button className={view === "graph" ? "active" : ""} onClick={() => setView("graph")}><Network size={15} />Knowledge graph</button>
+        </div>
         <StatusPanel health={health} loading={healthLoading} error={healthError} onRetry={() => void checkHealth()} />
         <div className="sidebar-footer"><span>LOCAL-FIRST RAG</span><b>v1.0</b></div>
       </nav>
@@ -86,13 +92,13 @@ export default function App() {
       <main className="workspace">
         <header className="topbar">
           <button className="icon-button mobile-menu" title="Menu"><Menu size={18} /></button>
-          <div><span>ACTIVE WORKSPACE</span><strong>Knowledge graph assistant</strong></div>
-          <button className="icon-button" onClick={() => setEvidenceOpen((open) => !open)} title="Toggle evidence">
+          <div><span>ACTIVE WORKSPACE</span><strong>{view === "chat" ? "Knowledge graph assistant" : "Knowledge base explorer"}</strong></div>
+          {view === "chat" && <button className="icon-button" onClick={() => setEvidenceOpen((open) => !open)} title="Toggle evidence">
             {evidenceOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
-          </button>
+          </button>}
         </header>
 
-        <section className="conversation">
+        {view === "graph" ? <GraphExplorer /> : <><section className="conversation">
           {messages.length === 0 ? (
             <div className="welcome">
               <div className="welcome-mark"><Sparkles size={24} /></div>
@@ -134,10 +140,10 @@ export default function App() {
             <button type="submit" disabled={!question.trim() || sending} title="Send question"><ArrowUp size={18} /></button>
           </form>
           <p>The 3B model can make mistakes. Verify important claims using the evidence trace.</p>
-        </div>
+        </div></>}
       </main>
 
-      {evidenceOpen && <EvidencePanel result={activeResult} />}
+      {view === "chat" && evidenceOpen && <EvidencePanel result={activeResult} />}
     </div>
   );
 }

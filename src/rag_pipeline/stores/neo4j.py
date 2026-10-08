@@ -121,6 +121,43 @@ class Neo4jKnowledgeStore:
             for hit in hits
         ]
 
+    def graph_page(
+        self, *, query: str = "", domain: str = "", offset: int = 0, limit: int = 200
+    ) -> tuple[list[Fact], int, list[dict]]:
+        where = """
+        WHERE ($domain = '' OR toLower(f.domain) = toLower($domain))
+          AND ($query = '' OR toLower(f.text) CONTAINS toLower($query)
+               OR toLower(f.subject) CONTAINS toLower($query)
+               OR toLower(f.object) CONTAINS toLower($query)
+               OR toLower(f.relation) CONTAINS toLower($query))
+        """
+        parameters = {"query": query, "domain": domain, "offset": offset, "limit": limit}
+        count_records, _, _ = self.driver.execute_query(
+            f"MATCH (f:Fact) {where} RETURN count(f) AS total",
+            parameters_=parameters, database_=self.database,
+        )
+        records, _, _ = self.driver.execute_query(
+            f"""
+            MATCH (f:Fact) {where}
+            OPTIONAL MATCH (s:Source)-[:SUPPORTS]->(f)
+            RETURN f AS fact, collect(s) AS sources
+            ORDER BY f.domain, f.subject, f.relation, f.object
+            SKIP $offset LIMIT $limit
+            """,
+            parameters_=parameters, database_=self.database,
+        )
+        facts = []
+        for row in records:
+            payload = dict(row["fact"])
+            payload["sources"] = [dict(source) for source in row["sources"] if source]
+            facts.append(self._fact_from_record(payload))
+        domain_records, _, _ = self.driver.execute_query(
+            "MATCH (f:Fact) RETURN f.domain AS name, count(f) AS facts ORDER BY facts DESC, name",
+            database_=self.database,
+        )
+        domains = [{"name": row["name"], "facts": int(row["facts"])} for row in domain_records]
+        return facts, int(count_records[0]["total"]), domains
+
     def all_facts(self) -> list[Fact]:
         cypher = """
         MATCH (f:Fact) OPTIONAL MATCH (s:Source)-[:SUPPORTS]->(f)

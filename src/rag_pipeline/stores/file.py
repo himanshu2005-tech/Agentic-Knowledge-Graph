@@ -156,5 +156,26 @@ class FileKnowledgeStore:
                 hits.append(RetrievalHit(fact=fact, score=0.35, graph_score=0.35, reasons=("graph-neighbor",)))
         return hits[:limit]
 
+    def graph_page(
+        self, *, query: str = "", domain: str = "", offset: int = 0, limit: int = 200
+    ) -> tuple[list[Fact], int, list[dict]]:
+        with self._lock:
+            values = tuple(self._facts.values())
+        domain_counts: dict[str, int] = {}
+        for fact in values:
+            domain_counts[fact.domain] = domain_counts.get(fact.domain, 0) + 1
+        query_tokens = tokenize(query)
+        filtered = [
+            fact for fact in values
+            if (not domain or fact.domain.lower() == domain.lower())
+            and (not query_tokens or query_tokens & tokenize(fact.text))
+        ]
+        filtered.sort(key=lambda fact: (fact.domain.lower(), fact.subject.lower(), fact.relation.lower(), fact.object.lower()))
+        domains = [
+            {"name": name, "facts": count}
+            for name, count in sorted(domain_counts.items(), key=lambda item: (-item[1], item[0].lower()))
+        ]
+        return filtered[offset:offset + limit], len(filtered), domains
+
     def close(self) -> None:
         return None

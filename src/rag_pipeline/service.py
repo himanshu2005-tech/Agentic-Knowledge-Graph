@@ -171,6 +171,44 @@ class RAGService:
         ROUTES.labels(result.route).inc()
         return result
 
+    def graph_view(self, query: str = "", domain: str = "", offset: int = 0, limit: int = 200) -> dict:
+        facts, total, domains = self.store.graph_page(
+            query=query.strip(), domain=domain.strip(), offset=offset, limit=limit
+        )
+        nodes: dict[str, dict] = {}
+        edges = []
+        for fact in facts:
+            for entity, role in ((fact.subject, "subject"), (fact.object, "object")):
+                key = entity.strip().lower()
+                node = nodes.setdefault(key, {
+                    "id": key, "label": entity, "domains": set(), "degree": 0,
+                })
+                node["domains"].add(fact.domain)
+                node["degree"] += 1
+            edges.append({
+                "id": fact.id,
+                "source": fact.subject.strip().lower(),
+                "target": fact.object.strip().lower(),
+                "label": fact.relation,
+                "domain": fact.domain,
+                "confidence": fact.confidence,
+                "verification_status": fact.verification_status,
+                "source_count": len({source.url for source in fact.sources}),
+            })
+        serialized_nodes = [
+            {**node, "domains": sorted(node["domains"])} for node in nodes.values()
+        ]
+        serialized_nodes.sort(key=lambda node: (-node["degree"], node["label"].lower()))
+        return {
+            "nodes": serialized_nodes,
+            "edges": edges,
+            "domains": domains,
+            "pagination": {
+                "offset": offset, "limit": limit, "returned": len(facts),
+                "total_facts": total, "has_more": offset + len(facts) < total,
+            },
+        }
+
     def _expand(self, question: str, entities: Sequence[str]) -> int:
         if self.groq is None:
             return 0
