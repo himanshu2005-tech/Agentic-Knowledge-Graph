@@ -33,12 +33,14 @@ export type ChatResponse = {
   route: "local" | "expand" | string;
   expanded_facts: number;
   evidence: Evidence[];
+  code?: { path: string; language: string; size: number };
 };
 
 export type HealthResponse = {
   status: string;
   store: { backend: string; status: string; facts?: number };
   local_model_loaded: boolean;
+  local_adapter_loaded: boolean;
   expansion_configured: boolean;
 };
 
@@ -73,6 +75,28 @@ export type GraphResponse = {
   };
 };
 
+export type VaultFile = {
+  path: string; name: string; language: string; extension: string; size: number; modified_at: string;
+};
+
+export type VaultResponse = {
+  files: VaultFile[];
+  languages: { name: string; files: number }[];
+  pagination: { offset: number; limit: number; returned: number; total_files: number; has_more: boolean };
+};
+
+export type VaultFileResponse = { path: string; name: string; size: number; content: string };
+
+export type PipelineEvent = {
+  stage: string;
+  message: string;
+  sources?: number;
+  urls?: string[];
+  facts?: number;
+  confidence?: number;
+  at?: number;
+};
+
 export type Message = {
   id: string;
   role: "user" | "assistant";
@@ -81,4 +105,5 @@ export type Message = {
   result?: ChatResponse;
   question?: string;
   feedback?: "correct" | "incorrect" | "incomplete";
+  trace?: PipelineEvent[];
 };

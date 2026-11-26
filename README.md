@@ -6,7 +6,7 @@
 [![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=111)](https://react.dev/)
 [![Neo4j](https://img.shields.io/badge/Graph-Neo4j-4581C3?logo=neo4j&logoColor=white)](https://neo4j.com/)
-[![Tests](https://img.shields.io/badge/tests-23%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-24%20passing-brightgreen)](#testing)
 
 Agentic Knowledge Graph RAG is designed around a simple principle: **the final local model should not need to know everything; it should receive the right verified context**. The pipeline first searches existing code and knowledge, evaluates whether the evidence is sufficient, expands missing knowledge through a cloud reasoning model and web search when necessary, stores grounded facts with their sources, and finally asks a local 3B model to produce a readable answer.
 
@@ -33,6 +33,7 @@ The project includes a FastAPI backend, a React knowledge console, file-backed a
 - [Trust, provenance, and entity safety](#trust-provenance-and-entity-safety)
 - [Human feedback loop](#human-feedback-loop)
 - [Evaluation and results](#evaluation-and-results)
+- [Fine-tuning the local 3B model](#fine-tuning-the-local-3b-model)
 - [Testing](#testing)
 - [Observability](#observability)
 - [Troubleshooting](#troubleshooting)
@@ -657,6 +658,37 @@ python eval/codex-accuracy/plot_30_question_analysis.py
 ```
 
 Read [eval/README.md](eval/README.md) for all evaluation commands. Some evaluations call paid or rate-limited external APIs; review the script and configure credentials before running them.
+
+## Fine-tuning the local 3B model
+
+The `finetune/` directory contains a reproducible QLoRA workflow for teaching the local model evidence-only answering, entity isolation, refusal behavior, structured profiles, and valid citations.
+
+Install training support and build the dataset:
+
+```powershell
+python -m pip install -e ".[gpu,train,dev]"
+python -m finetune.build_dataset
+```
+
+Run a two-step hardware smoke test before a long job:
+
+```powershell
+python -m finetune.train_qlora --max-steps 2 --output finetune/checkpoints/smoke
+```
+
+Start the two-epoch training run:
+
+```powershell
+python -m finetune.train_qlora --epochs 2
+```
+
+Compare the untouched base model with the adapter on the entity-grouped held-out split:
+
+```powershell
+python -m finetune.evaluate_adapter
+```
+
+The application automatically uses `finetune/checkpoints/qwen3b-kg-qlora/best-adapter` when that adapter exists. Adapter checkpoints are ignored by Git because they are generated binary artifacts; the dataset generator, JSONL splits, evaluation output, and training scripts remain reproducible.
 
 ## Testing
 

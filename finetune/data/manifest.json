@@ -1,0 +1,9 @@
+{
+  "seed": 42,
+  "total": 294,
+  "splits": {
+    "train": 235,
+    "validation": 32,
+    "test": 27
+  }
+}

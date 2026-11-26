@@ -1,18 +1,21 @@
-import { ArrowUp, LoaderCircle, Menu, MessageSquare, Network, PanelRightClose, PanelRightOpen, Plus, Sparkles } from "lucide-react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { ArrowUp, Code2, Menu, MessageSquare, Network, PanelRightClose, PanelRightOpen, Plus, Sparkles } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { Brand } from "./components/Brand";
+import { CodeVault } from "./components/CodeVault";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { GraphExplorer } from "./components/GraphExplorer";
 import { MessageBubble } from "./components/MessageBubble";
 import { StatusPanel } from "./components/StatusPanel";
-import type { ChatResponse, HealthResponse, Message } from "./types";
+import { LiveTrace } from "./components/PipelineTrace";
+import type { ChatResponse, HealthResponse, Message, PipelineEvent } from "./types";
 import "./styles.css";
 
 const suggestions = [
-  "Who invented Pascal?",
   "What are Prasanna Kumar's research interests?",
   "Explain how Quicksort works.",
+  "What is photosynthesis?",
 ];
 
 const makeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -26,24 +29,41 @@ export default function App() {
   const [sending, setSending] = useState(false);
   const [activeResult, setActiveResult] = useState<ChatResponse | null>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(true);
-  const [view, setView] = useState<"chat" | "graph">("chat");
+  const [view, setView] = useState<"chat" | "graph" | "vault">("chat");
   const endRef = useRef<HTMLDivElement>(null);
 
-  const checkHealth = async () => {
-    setHealthLoading(true);
-    setHealthError(null);
-    try { setHealth(await api.health()); }
-    catch (error) { setHealthError(error instanceof Error ? error.message : "Unable to connect"); }
-    finally { setHealthLoading(false); }
-  };
+  const [elapsed, setElapsed] = useState(0);
+  const [liveTrace, setLiveTrace] = useState<PipelineEvent[]>([]);
+
+  const refreshHealth = useCallback(async () => {
+    try {
+      setHealth(await api.health());
+      setHealthError(null);
+    } catch (error) {
+      setHealthError(error instanceof Error ? error.message : "Unable to connect");
+    } finally {
+      setHealthLoading(false);
+    }
+  }, []);
+
+  const checkHealth = () => { setHealthLoading(true); void refreshHealth(); };
+
+  const modelReady = Boolean(health?.local_model_loaded);
+  useEffect(() => {
+    const first = window.setTimeout(() => void refreshHealth(), 0);
+    // Poll quickly while the model warms up or the API is down, slowly once ready.
+    const interval = window.setInterval(() => void refreshHealth(), modelReady && !healthError ? 30_000 : 4_000);
+    return () => { window.clearTimeout(first); window.clearInterval(interval); };
+  }, [refreshHealth, modelReady, healthError]);
 
   useEffect(() => {
-    void api.health()
-      .then((result) => setHealth(result))
-      .catch((error: unknown) => setHealthError(error instanceof Error ? error.message : "Unable to connect"))
-      .finally(() => setHealthLoading(false));
-  }, []);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending]);
+    if (!sending) return;
+    const started = Date.now();
+    const interval = window.setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => { window.clearInterval(interval); setElapsed(0); };
+  }, [sending]);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, sending, liveTrace]);
 
   const send = async (value = question) => {
     const clean = value.trim();
@@ -51,14 +71,19 @@ export default function App() {
     setQuestion("");
     setSending(true);
     setMessages((current) => [...current, { id: makeId(), role: "user", content: clean, createdAt: new Date() }]);
+    setLiveTrace([]);
+    const trace: PipelineEvent[] = [];
     try {
-      const result = await api.chat(clean);
-      setActiveResult(result);
-      setMessages((current) => [...current, { id: makeId(), role: "assistant", content: result.answer, result, question: clean, createdAt: new Date() }]);
+      const result = await api.chatStream(clean, (event) => {
+        trace.push(event);
+        setLiveTrace([...trace]);
+      });
+      if (result.route !== "chat" && result.route !== "code") setActiveResult(result);
+      setMessages((current) => [...current, { id: makeId(), role: "assistant", content: result.answer, result, question: clean, trace, createdAt: new Date() }]);
     } catch (error) {
       const content = error instanceof Error ? error.message : "The request could not be completed.";
-      setMessages((current) => [...current, { id: makeId(), role: "assistant", content: `I couldn't complete that request: ${content}`, createdAt: new Date() }]);
-    } finally { setSending(false); }
+      setMessages((current) => [...current, { id: makeId(), role: "assistant", content: `I couldn't complete that request: ${content}`, trace, createdAt: new Date() }]);
+    } finally { setSending(false); setLiveTrace([]); }
   };
 
   const submit = (event: FormEvent) => { event.preventDefault(); void send(); };
@@ -84,6 +109,7 @@ export default function App() {
         <div className="view-switcher">
           <button className={view === "chat" ? "active" : ""} onClick={() => setView("chat")}><MessageSquare size={15} />Assistant</button>
           <button className={view === "graph" ? "active" : ""} onClick={() => setView("graph")}><Network size={15} />Knowledge graph</button>
+          <button className={view === "vault" ? "active" : ""} onClick={() => setView("vault")}><Code2 size={15} />Code Vault</button>
         </div>
         <StatusPanel health={health} loading={healthLoading} error={healthError} onRetry={() => void checkHealth()} />
         <div className="sidebar-footer"><span>LOCAL-FIRST RAG</span><b>v1.0</b></div>
@@ -92,13 +118,13 @@ export default function App() {
       <main className="workspace">
         <header className="topbar">
           <button className="icon-button mobile-menu" title="Menu"><Menu size={18} /></button>
-          <div><span>ACTIVE WORKSPACE</span><strong>{view === "chat" ? "Knowledge graph assistant" : "Knowledge base explorer"}</strong></div>
+          <div><span>ACTIVE WORKSPACE</span><strong>{view === "chat" ? "Knowledge graph assistant" : view === "graph" ? "Knowledge base explorer" : "Code Vault browser"}</strong></div>
           {view === "chat" && <button className="icon-button" onClick={() => setEvidenceOpen((open) => !open)} title="Toggle evidence">
             {evidenceOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
           </button>}
         </header>
 
-        {view === "graph" ? <GraphExplorer /> : <><section className="conversation">
+        {view === "graph" ? <ErrorBoundary label="graph"><GraphExplorer /></ErrorBoundary> : view === "vault" ? <ErrorBoundary label="vault"><CodeVault /></ErrorBoundary> : <><section className="conversation">
           {messages.length === 0 ? (
             <div className="welcome">
               <div className="welcome-mark"><Sparkles size={24} /></div>
@@ -119,7 +145,7 @@ export default function App() {
                   onFeedback={(verdict) => void submitFeedback(message.id, verdict)}
                 />
               ))}
-              {sending && <div className="thinking"><LoaderCircle className="spin" size={16} /><span>Searching graph and synthesizing locally…</span></div>}
+              {sending && <LiveTrace events={liveTrace} elapsed={elapsed} />}
               <div ref={endRef} />
             </div>
           )}
@@ -143,7 +169,7 @@ export default function App() {
         </div></>}
       </main>
 
-      {view === "chat" && evidenceOpen && <EvidencePanel result={activeResult} />}
+      {view === "chat" && evidenceOpen && <ErrorBoundary label="evidence"><EvidencePanel result={activeResult} /></ErrorBoundary>}
     </div>
   );
 }

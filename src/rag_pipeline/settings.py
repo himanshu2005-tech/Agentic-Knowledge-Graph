@@ -24,7 +24,12 @@ class Settings(BaseSettings):
     rag_kb_path: Path = PROJECT_ROOT / "data" / "rag" / "rag_knowledge.txt"
     provenance_path: Path = PROJECT_ROOT / "data" / "rag" / "fact_provenance.jsonl"
     feedback_path: Path = PROJECT_ROOT / "data" / "rag" / "answer_feedback.jsonl"
+    codevault_path: Path = PROJECT_ROOT / "codevault"
     local_model_path: Path = Field(PROJECT_ROOT / "local_qwen_3b", alias="LOCAL_MODEL_PATH")
+    local_adapter_path: Path = Field(
+        PROJECT_ROOT / "finetune" / "checkpoints" / "qwen3b-kg-qlora" / "best-adapter",
+        alias="LOCAL_ADAPTER_PATH",
+    )
 
     kg_model: str = Field("openai/gpt-oss-120b", alias="KG_MODEL")
     groq_api_key: SecretStr | None = Field(None, alias="GROQ_API_KEY")
@@ -36,6 +41,7 @@ class Settings(BaseSettings):
         "sentence-transformers/all-MiniLM-L6-v2", alias="RAG_EMBEDDING_MODEL"
     )
     enable_embeddings: bool = Field(True, alias="RAG_ENABLE_EMBEDDINGS")
+    warmup_on_start: bool = Field(True, alias="RAG_WARMUP_ON_START")
     cors_origins: str = Field(
         "http://127.0.0.1:5173,http://localhost:5173",
         alias="RAG_CORS_ORIGINS",

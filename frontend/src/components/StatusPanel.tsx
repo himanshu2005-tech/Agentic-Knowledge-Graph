@@ -29,7 +29,7 @@ export function StatusPanel({ health, loading, error, onRetry }: Props) {
         </div>
         <div className="status-row">
           <Cpu size={16} /><span>Local 3B</span>
-          <b>{health?.local_model_loaded ? "Loaded" : online ? "Standby" : "—"}</b>
+          <b>{health?.local_adapter_loaded ? "Fine-tuned" : health?.local_model_loaded ? "Loaded" : online ? "Warming up…" : "—"}</b>
         </div>
       </div>
 

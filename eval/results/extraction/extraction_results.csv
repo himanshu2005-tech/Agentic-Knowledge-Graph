@@ -2,14 +2,14 @@ topic,precision,recall,f1
 What are the core components of the central dogma of molecular biology?,0.0,0.0,0.0
 Explain the role of mitochondria in a cell.,0.0,0.0,0.0
 How do vaccines build immunity?,0.0,0.0,0.0
-What is photosynthesis and who does it?,0.14285714285714285,0.6666666666666666,0.23529411764705882
+What is photosynthesis and who does it?,0.10526315789473684,0.6666666666666666,0.18181818181818182
 What is the function of red blood cells?,0.0,0.0,0.0
-Explain Object-Oriented Programming (OOP) inheritance.,0.0,0.0,0.0
-What is a REST API?,0.0,0.0,0.0
-How does a hash table work?,0.05,0.3333333333333333,0.08695652173913045
+Explain Object-Oriented Programming (OOP) inheritance.,0.05263157894736842,0.3333333333333333,0.09090909090909091
+What is a REST API?,0.09090909090909091,0.3333333333333333,0.14285714285714288
+How does a hash table work?,0.125,0.6666666666666666,0.21052631578947367
 What is the purpose of Docker?,0.0,0.0,0.0
-Who invented the Python programming language?,0.0,0.0,0.0
-What is the theory of general relativity?,0.0,0.0,0.0
+Who invented the Python programming language?,0.07692307692307693,0.3333333333333333,0.125
+What is the theory of general relativity?,0.09090909090909091,0.3333333333333333,0.14285714285714288
 Explain Newton's second law of motion.,0.0,0.0,0.0
 What is quantum entanglement?,0.0,0.0,0.0
 How does a nuclear reactor work?,0.0,0.0,0.0

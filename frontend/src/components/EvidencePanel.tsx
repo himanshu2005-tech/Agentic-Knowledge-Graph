@@ -1,6 +1,15 @@
 import { ExternalLink, FileCheck2, GitBranch } from "lucide-react";
 import type { ChatResponse } from "../types";
 
+const safeLink = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export function EvidencePanel({ result }: { result: ChatResponse | null }) {
   return (
     <aside className="evidence-panel">
@@ -21,13 +30,14 @@ export function EvidencePanel({ result }: { result: ChatResponse | null }) {
       ) : (
         <>
           <div className="confidence-block">
-            <div><span>Retrieval confidence</span><strong>{Math.round(result.confidence * 100)}%</strong></div>
-            <div className="confidence-track"><span style={{ width: `${result.confidence * 100}%` }} /></div>
+            <div><span>Answer confidence</span><strong>{Math.round(result.confidence * 100)}%</strong></div>
+            <div className="confidence-track"><span style={{ width: `${Math.min(100, Math.max(0, result.confidence * 100))}%` }} /></div>
             <small>{result.expanded_facts ? `${result.expanded_facts} new facts added` : "No graph expansion needed"}</small>
           </div>
           <div className="evidence-list">
             {result.evidence.map((item) => {
               const source = item.fact.sources[0];
+              const link = source?.url ? safeLink(source.url) : null;
               return (
                 <article className="evidence-card" key={`${item.label}-${item.fact.id}`}>
                   <div className="evidence-card-top">
@@ -39,9 +49,9 @@ export function EvidencePanel({ result }: { result: ChatResponse | null }) {
                     <span><FileCheck2 size={12} />{item.fact.verification_status.replaceAll("_", " ")}</span>
                     <span>{item.fact.domain}</span>
                   </div>
-                  {source?.url && (
-                    <a href={source.url} target="_blank" rel="noreferrer">
-                      {source.title || new URL(source.url).hostname}<ExternalLink size={12} />
+                  {link && (
+                    <a href={link.href} target="_blank" rel="noreferrer">
+                      {source.title || link.hostname}<ExternalLink size={12} />
                     </a>
                   )}
                 </article>

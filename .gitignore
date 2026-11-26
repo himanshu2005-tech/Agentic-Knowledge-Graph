@@ -18,6 +18,8 @@ local_qwen_3b/
 local_llama_3b/
 local_gemma_2_2b_it/
 local_qwen_model/
+finetune/checkpoints/
+finetune/data_v2/
 
 # Local development outputs
 .pytest_cache/

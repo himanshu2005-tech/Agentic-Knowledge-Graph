@@ -65,7 +65,13 @@ export function GraphExplorer() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try { setData(await api.graph({ query, domain, offset, limit })); }
+    try {
+      const next = await api.graph({ query, domain, offset, limit });
+      transformRef.current = { x: 0, y: 0, scale: 1 };
+      setSelectedNode(null);
+      setSelectedEdge(null);
+      setData(next);
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load graph"); }
     finally { setLoading(false); }
   }, [query, domain, offset, limit]);
@@ -87,8 +93,6 @@ export function GraphExplorer() {
     transformRef.current = { x: 0, y: 0, scale: 1 };
     setRevision((value) => value + 1);
   };
-
-  useEffect(() => { resetView(); setSelectedNode(null); setSelectedEdge(null); }, [data]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

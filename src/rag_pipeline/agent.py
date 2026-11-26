@@ -419,7 +419,8 @@ def search_tavily(query: str, api_key: str | None = None) -> tuple[str, list[dic
 #  TOOL 2: ON-DEMAND TRIPLET GENERATION
 # ══════════════════════════════════════════════════════════════════════
 
-def generate_new_triplets(topic: str, client, model_name: str, user_question: str = "", search_context: str = "") -> list[tuple]:
+def generate_new_triplets(topic: str, client, model_name: str, user_question: str = "", search_context: str = "",
+                          max_rate_limit_wait: float | None = None) -> list[tuple]:
     """Generate new triplets for a topic using the 70B model via Groq API.
     Includes the user's original question as context for relevance."""
     context_hint = ""
@@ -501,6 +502,9 @@ Topic: {topic}
                     wait_time = (mins * 60) + secs + 2.0
                 else:
                     wait_time = 60.0
+                if max_rate_limit_wait is not None and wait_time > max_rate_limit_wait:
+                    logger.warning(f"Rate limit wait of {wait_time:.1f}s exceeds {max_rate_limit_wait:.0f}s budget; skipping expansion")
+                    break
                 logger.warning(f"Rate limit hit! Sleeping {wait_time:.1f}s... (Attempt {attempt+1}/{MAX_RETRIES})")
                 time.sleep(wait_time)
             else:
@@ -559,7 +563,7 @@ _LANG_EXT_MAP = {
 }
 
 
-def evaluate_code_need(question: str, topics: list[str], client, model_name: str) -> tuple[bool, str, str]:
+def evaluate_code_need(question: str, topics: list[str], client, model_name: str) -> tuple[bool, str, str, str]:
     """Ask the 70B model whether the question requires an implementation/code.
     Returns (needs_code: bool, language: str, flavor: str).
     Flavor helps differentiate implementations (e.g. PyTorch vs Raw Python)."""

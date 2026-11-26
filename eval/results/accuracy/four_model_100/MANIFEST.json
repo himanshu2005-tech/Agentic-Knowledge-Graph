@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "question_count": 100,
+  "answer_count": 400,
+  "models": [
+    "raw_3b",
+    "raw_3b_kg",
+    "fine_tuned_3b_kg",
+    "cloud_120b"
+  ],
+  "files": [
+    {
+      "name": "README.md",
+      "bytes": 71340,
+      "sha256": "002663bf16faeec2b5627d7c8bab34b88a9d58f37a553d61bde30c913db2f5b8"
+    },
+    {
+      "name": "results.json",
+      "bytes": 86313,
+      "sha256": "16c907624bec5d2733f3ed1e12b4907fc80a68ce47a703b7e278b7b5e6f1d9c8"
+    },
+    {
+      "name": "answers.csv",
+      "bytes": 55200,
+      "sha256": "f5c2a96ed8968b551e6cc4cf7f17a19152b7f213bb85e32bc5c51ebb98f90ac1"
+    },
+    {
+      "name": "test_100.jsonl",
+      "bytes": 138121,
+      "sha256": "e9598800d1cb83cfd0cdd6119bf6a49da0fa13d47e513bfcc160fcfcc4c994c8"
+    },
+    {
+      "name": "run_100_question_four_model_eval.py",
+      "bytes": 9786,
+      "sha256": "eacaca19122c396a0958de71e3f4b792f4869f29012947a95f88b982cc0fe3b2"
+    },
+    {
+      "name": "CLAUDE_REVIEW_INSTRUCTIONS.md",
+      "bytes": 3220,
+      "sha256": "992354e0cd76ca7ef0353d794f2ae3511704b27d2ea0b258ff8670a7d7ecee07"
+    }
+  ],
+  "excluded": [
+    ".env",
+    "API keys",
+    "model weights",
+    "training checkpoints",
+    "full datasets"
+  ]
+}

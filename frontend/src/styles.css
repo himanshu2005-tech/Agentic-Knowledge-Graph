@@ -18,7 +18,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); }
-button, textarea { font: inherit; }
+button, textarea, select { font: inherit; }
 button { cursor: pointer; }
 
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 258px minmax(0, 1fr); }
@@ -83,6 +83,34 @@ button { cursor: pointer; }
 .message-actions button { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 5px; }
 .message-actions button:hover, .message-actions button.selected { color: var(--accent); background: var(--accent-soft); }
 .thinking { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 11px; padding: 4px 0 24px; }
+.thinking b { color: var(--accent); font: 500 10px "Cascadia Mono", Consolas, monospace; }
+.thinking small { display: block; margin-top: 4px; color: var(--quiet); font-size: 10px; }
+.trace { margin: 0 0 22px; font-size: 11px; color: var(--muted); }
+.trace.live { border-left: 1px solid var(--line-bright); padding-left: 20px; }
+.trace-head { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; }
+.trace-head span { color: var(--accent); font: 500 9px "Cascadia Mono", Consolas, monospace; letter-spacing: .08em; }
+.trace-head b { color: var(--quiet); font: 500 10px "Cascadia Mono", Consolas, monospace; }
+.trace-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.trace-steps li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 8px; align-items: start; line-height: 1.45; }
+.trace-steps li.active { color: #e8eadf; }
+.trace-steps li.web .trace-icon { color: #68a8ff; }
+.trace-steps li.warn { color: #f4bd62; }
+.trace-icon { display: inline-flex; padding-top: 1px; color: var(--accent); }
+.trace-text small { display: block; margin-top: 2px; color: var(--quiet); font-size: 10px; overflow-wrap: anywhere; }
+.trace-done { color: var(--quiet); margin-top: 2px; }
+.trace.done { margin: 0 0 10px; }
+.trace.done summary { display: inline-flex; gap: 7px; align-items: center; cursor: pointer; color: var(--quiet); font-size: 10px; list-style: none; }
+.trace.done summary::-webkit-details-marker { display: none; }
+.trace.done summary:hover { color: var(--accent); }
+.trace.done summary small { color: var(--quiet); opacity: .7; }
+.trace.done[open] summary { margin-bottom: 9px; }
+.code-block { margin: 12px 0 4px; padding: 14px 16px; max-height: 520px; overflow: auto; white-space: pre; border: 1px solid var(--line); border-radius: 6px; background: #10110e; color: #e8eadf; font: 400 11.5px/1.6 "Cascadia Mono", Consolas, monospace; }
+.code-block::before { content: attr(data-language); display: block; margin-bottom: 8px; color: var(--quiet); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.trace-steps li.code .trace-icon { color: #d98cff; }
+.footer-note { display: inline-flex; align-items: center; gap: 6px; color: var(--quiet); font: 500 9px "Cascadia Mono", Consolas, monospace; }
+.cite { display: inline-block; margin: 0 2px; padding: 0 5px; border: 1px solid var(--line-bright); border-radius: 4px; color: var(--accent); font: 500 9px/1.6 "Cascadia Mono", Consolas, monospace; vertical-align: 1px; }
+.boundary-fallback { display: grid; gap: 8px; place-content: center; justify-items: center; min-height: 220px; padding: 24px; color: var(--muted); font-size: 12px; text-align: center; }
+.boundary-fallback strong { color: #e8eadf; }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -147,6 +175,28 @@ button { cursor: pointer; }
 .graph-pagination button { border: 1px solid var(--line); background: #141511; color: var(--muted); border-radius: 7px; padding: 7px 10px; display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 9px; }
 .graph-pagination button:disabled { opacity: .35; cursor: default; }
 
+.vault-explorer { min-height: 0; height: calc(100vh - 62px); padding: 16px 18px 14px; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 10px; }
+.vault-body { min-height: 0; display: grid; grid-template-columns: minmax(210px, 28%) minmax(0, 1fr); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #10110e; }
+.vault-files { min-height: 0; overflow-y: auto; border-right: 1px solid var(--line); padding: 7px; }
+.vault-files button { width: 100%; border: 0; background: transparent; color: var(--muted); display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px; border-radius: 7px; }
+.vault-files button:hover { background: #191b16; color: var(--text); }
+.vault-files button.active { background: var(--accent-soft); color: var(--accent); }
+.vault-files span, .vault-files strong, .vault-files small { display: block; min-width: 0; }
+.vault-files span { overflow: hidden; }
+.vault-files strong { color: inherit; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vault-files small { color: var(--quiet); font-size: 8px; margin-top: 4px; text-transform: capitalize; }
+.vault-preview { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.vault-preview header { display: flex; justify-content: space-between; gap: 12px; padding: 12px 15px; border-bottom: 1px solid var(--line); }
+.vault-preview header strong, .vault-preview header small { display: block; }
+.vault-preview header strong { font-size: 11px; }
+.vault-preview header small { color: var(--quiet); font-size: 8px; margin-top: 4px; overflow-wrap: anywhere; }
+.vault-preview header > div:last-child { display: flex; gap: 6px; }
+.vault-preview header button { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--muted); }
+.vault-preview header button:hover { color: var(--accent); }
+.vault-preview pre { min-height: 0; overflow: auto; margin: 0; padding: 18px; color: #d8dccf; font: 11px/1.65 "Cascadia Mono", Consolas, monospace; tab-size: 2; }
+.vault-empty { min-height: 180px; display: flex; gap: 10px; align-items: center; justify-content: center; color: var(--quiet); font-size: 10px; padding: 20px; text-align: center; }
+.vault-empty.error { color: var(--danger); }
+
 @media (max-width: 1120px) {
   .app-shell.with-evidence { grid-template-columns: 220px minmax(0, 1fr) 310px; }
   .app-shell { grid-template-columns: 220px minmax(0, 1fr); }
@@ -160,6 +210,9 @@ button { cursor: pointer; }
   .graph-toolbar { flex-wrap: wrap; }
   .graph-search { flex-basis: 100%; }
   .graph-summary span:last-child { display: none; }
+  .vault-explorer { height: calc(100vh - 62px); padding: 10px; }
+  .vault-body { grid-template-columns: 1fr; grid-template-rows: 190px minmax(0, 1fr); }
+  .vault-files { border-right: 0; border-bottom: 1px solid var(--line); }
 }
 @media (max-width: 560px) {
   .topbar { padding: 0 14px; }

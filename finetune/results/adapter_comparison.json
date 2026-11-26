@@ -1,0 +1,234 @@
+{
+  "base": {
+    "examples": 27,
+    "mean_token_f1": 0.7128,
+    "refusal_accuracy": 1.0,
+    "citation_validity": 1.0,
+    "raw_triplet_free_rate": 1.0
+  },
+  "adapted": {
+    "examples": 27,
+    "mean_token_f1": 0.9962,
+    "refusal_accuracy": 1.0,
+    "citation_validity": 1.0,
+    "raw_triplet_free_rate": 1.0
+  },
+  "answers": [
+    {
+      "id": "0cb6dc50fd71e367",
+      "kind": "entity_isolation",
+      "question": "Who is Coimbatore Campus? Use only facts about that person or entity.",
+      "expected": "Coimbatore Campus\n\n- Coimbatore Campus is located in Tamil Nadu. [F1]\n- Coimbatore Campus is part of Tamil Nadu State. [F4]",
+      "base": "Coimbatore Campus is located in Tamil Nadu.",
+      "adapted": "Coimbatore Campus\n\n- Coimbatore Campus is located in Tamil Nadu. [F1]\n- Coimbatore Campus is part of Tamil Nadu State. [F4]"
+    },
+    {
+      "id": "a9e0b14ec5424f18",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 35?",
+      "expected": "Sample Person 35\n\nRole\n- Program Chair. [F1]\n\nExpertise\n- Data Analytics. [F2]",
+      "base": "Sample Person 35 is a program chair who specializes in data analytics.",
+      "adapted": "Sample Person 35\n\nRole\n- Program Chair. [F1]\n\nExpertise\n- Data Analytics. [F2]"
+    },
+    {
+      "id": "1bf4e2773dc6c980",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 29?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "27468df2939a04aa",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 23?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "0a9059ed3e6ab98a",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 1?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer who Example Person 1 is based on the provided information. The evidence only mentions NagercoilCampus and AmritapuriCampus, but does not provide any details about Example Person 1 or their affiliation with these campuses.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "0cb6dc50fd71e367",
+      "kind": "entity_isolation",
+      "question": "Who is Coimbatore Campus? Use only facts about that person or entity.",
+      "expected": "Coimbatore Campus\n\n- Coimbatore Campus is located in Tamil Nadu. [F3]\n- Coimbatore Campus is part of Tamil Nadu State. [F4]",
+      "base": "Coimbatore Campus is located in Tamil Nadu.",
+      "adapted": "Coimbatore Campus\n\n- Coimbatore Campus is located in Tamil Nadu. [F1]\n- Coimbatore Campus is part of Tamil Nadu State. [F4]"
+    },
+    {
+      "id": "ecb66d7feed30440",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 115?",
+      "expected": "Sample Person 115\n\nRole\n- Program Chair. [F1]\n\nExpertise\n- Data Analytics. [F2]",
+      "base": "Sample Person 115 is a program chair who specializes in data analytics.",
+      "adapted": "Sample Person 115\n\nRole\n- Program Chair. [F1]\n\nExpertise\n- Data Analytics. [F2]"
+    },
+    {
+      "id": "790a1d9ae9f27268",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 6?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "d3bf4844fd75ee94",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 57?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer who Example Person 57 is based on the provided information. The evidence only mentions campuses in different states and does not provide any details about a person named Example Person 57.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "1daac18cc7a621d1",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 35?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer who Example Person 35 is based on the provided information. The evidence only mentions campuses and states but does not provide any details about Example Person 35.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "ca15dc7d4d95f73e",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 26?",
+      "expected": "Sample Person 26\n\nRole\n- Research Engineer. [F1]\n\nExpertise\n- Network Security. [F2]",
+      "base": "Sample Person 26 is a Research Engineer who specializes in Network Security.",
+      "adapted": "Sample Person 26\n\nRole\n- Research Engineer. [F1]\n\nExpertise\n- Network Security. [F2]"
+    },
+    {
+      "id": "558a0553eabafa2d",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 80?",
+      "expected": "Sample Person 80\n\nRole\n- Student. [F1]\n\nExpertise\n- Distributed Computing. [F2]",
+      "base": "Sample Person 80 is a student who specializes in Distributed Computing.",
+      "adapted": "Sample Person 80\n\nRole\n- Student. [F1]\n\nExpertise\n- Distributed Computing. [F2]"
+    },
+    {
+      "id": "1300da1606d54ce4",
+      "kind": "profile",
+      "question": "Give me a structured profile of Coimbatore Campus.",
+      "expected": "Coimbatore Campus\n\nVerified information\n- Coimbatore Campus is part of Tamil Nadu State. [F1]\n- Coimbatore Campus is located in Tamil Nadu. [F2]",
+      "base": "Coimbatore Campus is a part of the Tamil Nadu State and is located in Tamil Nadu.",
+      "adapted": "Coimbatore Campus\n\n- Coimbatore Campus is part of Tamil Nadu State. [F1]\n- Coimbatore Campus is located in Tamil Nadu. [F2]"
+    },
+    {
+      "id": "e2d7eb76e5d1e3fb",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 27?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "ae62b2b9b3a6b6fa",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 8?",
+      "expected": "Sample Person 8\n\nRole\n- Student. [F1]\n\nExpertise\n- Distributed Computing. [F2]",
+      "base": "Sample Person 8 is a student who specializes in Distributed Computing.",
+      "adapted": "Sample Person 8\n\nRole\n- Student. [F1]\n\nExpertise\n- Distributed Computing. [F2]"
+    },
+    {
+      "id": "0cb6dc50fd71e367",
+      "kind": "entity_isolation",
+      "question": "Who is Coimbatore Campus? Use only facts about that person or entity.",
+      "expected": "Coimbatore Campus\n\n- Coimbatore Campus is located in Tamil Nadu. [F1]\n- Coimbatore Campus is part of Tamil Nadu State. [F3]",
+      "base": "Coimbatore Campus is a campus located in Tamil Nadu, India.",
+      "adapted": "Coimbatore Campus\n\n- Coimbatore Campus is located in Tamil Nadu. [F1]\n- Coimbatore Campus is part of Tamil Nadu State. [F3]"
+    },
+    {
+      "id": "45755242ef245c9c",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 67?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "e9cb9b06a1e36ca0",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 66?",
+      "expected": "Sample Person 66\n\nRole\n- Research Engineer. [F1]\n\nExpertise\n- Network Security. [F2]",
+      "base": "Sample Person 66 is a Research Engineer who specializes in Network Security.",
+      "adapted": "Sample Person 66\n\nRole\n- Research Engineer. [F1]\n\nExpertise\n- Network Security. [F2]"
+    },
+    {
+      "id": "7603ad347fed3e7d",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 53?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "0499fae7cf12e8e4",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 97?",
+      "expected": "Sample Person 97\n\nRole\n- Professor. [F1]\n\nExpertise\n- Machine Learning. [F2]",
+      "base": "Sample Person 97 is a professor who specializes in Machine Learning.",
+      "adapted": "Sample Person 97\n\nRole\n- Professor. [F1]\n\nExpertise\n- Machine Learning. [F2]"
+    },
+    {
+      "id": "1a08c7849b7c1dfb",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 46?",
+      "expected": "Sample Person 46\n\nRole\n- Research Engineer. [F1]\n\nExpertise\n- Network Security. [F2]",
+      "base": "Sample Person 46 is a Research Engineer who specializes in Network Security.",
+      "adapted": "Sample Person 46\n\nRole\n- Research Engineer. [F1]\n\nExpertise\n- Network Security. [F2]"
+    },
+    {
+      "id": "a706d39cf8c96eb8",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 55?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "748c691c06aae476",
+      "kind": "single_fact",
+      "question": "What verified information is available about Coimbatore Campus?",
+      "expected": "Coimbatore Campus is part of Tamil Nadu State. [F1]",
+      "base": "Coimbatore Campus is part of the Tamil Nadu State.",
+      "adapted": "Coimbatore Campus is part of Tamil Nadu State. [F1]"
+    },
+    {
+      "id": "748c691c06aae476",
+      "kind": "single_fact",
+      "question": "What verified information is available about Coimbatore Campus?",
+      "expected": "Coimbatore Campus is located in Tamil Nadu. [F1]",
+      "base": "Coimbatore Campus is located in Tamil Nadu.",
+      "adapted": "Coimbatore Campus is located in Tamil Nadu. [F1]"
+    },
+    {
+      "id": "8307e7408fb4ab6f",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 10?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer who Example Person 10 is based on the provided evidence.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "3d5146dec309d2cf",
+      "kind": "structured_synthetic",
+      "question": "Who is Sample Person 57?",
+      "expected": "Sample Person 57\n\nRole\n- Professor. [F1]\n\nExpertise\n- Machine Learning. [F2]",
+      "base": "Sample Person 57 is a professor who specializes in Machine Learning.",
+      "adapted": "Sample Person 57\n\nRole\n- Professor. [F1]\n\nExpertise\n- Machine Learning. [F2]"
+    },
+    {
+      "id": "eb5d4e09e9a9c7cf",
+      "kind": "insufficient_identity",
+      "question": "Who is Example Person 24?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    }
+  ]
+}

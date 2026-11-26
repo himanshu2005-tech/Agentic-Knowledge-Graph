@@ -1,0 +1,818 @@
+{
+  "base": {
+    "examples": 100,
+    "mean_token_f1": 0.2281,
+    "refusal_accuracy": 0.1818,
+    "citation_validity": 1.0,
+    "raw_triplet_free_rate": 1.0
+  },
+  "adapted": {
+    "examples": 100,
+    "mean_token_f1": 0.8747,
+    "refusal_accuracy": 0.9091,
+    "citation_validity": 1.0,
+    "raw_triplet_free_rate": 1.0
+  },
+  "answers": [
+    {
+      "id": "squad_v2:5ad2cfe0d7d075001a42a328",
+      "kind": "unanswerable",
+      "question": "How often is Politics & Policy not published?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "Politics & Policy is published several times a week.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "halueval_qa:b5de8ad2d1df5ac5",
+      "kind": "grounded_qa",
+      "question": "Masjid al-Qiblatayn, is a mosque in which city, situated in the northwestern Awdal region of Somaliland, officially the Republic of Somaliland, is a self-declared state internationally recognised as an autonomous region of Somalia?",
+      "expected": "Zeila. [F1]",
+      "base": "Masjid al-Qiblatayn is located in Zeila, which is situated in the northwestern Awdal region of Somaliland. Somaliland is an internationally recognised state that is self-declared and is an autonomous region of Somalia.",
+      "adapted": "Zeila. [F1]"
+    },
+    {
+      "id": "squad_v2:56cfedcd234ae51400d9c0e5",
+      "kind": "extractive_answer",
+      "question": "How many people identify as gay or bisexual in NYC?",
+      "expected": "568,903. [F1]",
+      "base": "According to the evidence provided, approximately 568,903 individuals in the New York metropolitan area identify as gay or bisexual. This figure represents the largest self-identifying gay and bisexual community in the United States and one of the world's largest.",
+      "adapted": "568,903. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a899e94554299669944a54b",
+      "kind": "multi_hop",
+      "question": "Hangman stars what actress who began her acting career in \"Campfire Tales\"?",
+      "expected": "Amy Smart. [F1] [F2]",
+      "base": "Hangman stars Amy Smart, who began her acting career in \"Campfire Tales.\"",
+      "adapted": "Amy Smart. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:6a255a283cddbe23",
+      "kind": "grounded_qa",
+      "question": "Who was the showrunner for the Simpsons season with the episode spoofing Cape Fear?",
+      "expected": "David Mirkin. [F1]",
+      "base": "The showrunner for the Simpsons season that featured the episode \"Cape Feare\", which is a spoof of the 1962 film \"Cape Fear\", was David Mirkin.",
+      "adapted": "David Mirkin. [F1]"
+    },
+    {
+      "id": "halueval_qa:6b3f265b0ded247f",
+      "kind": "grounded_qa",
+      "question": "Innovative Life: The Anthology 1984-1989, is a compilation album released in 2008 by who, which American rapper, singer-songwriter, record producer and DJ?",
+      "expected": "Arabian Prince. [F1]",
+      "base": "Innovative Life: The Anthology 1984-1989 is a compilation album released in 2008 by American recording artist Arabian Prince. Kim Renard Nazel, better known by the stage name Arabian Prince, is an American rapper, singer-songwriter, record producer, and DJ.",
+      "adapted": "Arabian Prince. [F1]"
+    },
+    {
+      "id": "squad_v2:5726f2c6dd62a815002e95f6",
+      "kind": "extractive_answer",
+      "question": "Which genre did Madonna started out in?",
+      "expected": "rock music. [F1]",
+      "base": "Madonna started out in rock music.",
+      "adapted": "rock. [F1]"
+    },
+    {
+      "id": "halueval_qa:3b7f4bad9d850484",
+      "kind": "grounded_qa",
+      "question": "Which film director is younger, Del Lord or Wang Xiaoshuai?",
+      "expected": "Del Lord. [F1]",
+      "base": "Wang Xiaoshuai is younger than Del Lord. Wang Xiaoshuai was born on May 22, 1966, while Del Lord was born on October 7, 1894.",
+      "adapted": "Wang Xiaoshuai. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ab765005542993667793fcc",
+      "kind": "multi_hop",
+      "question": "In how many countries, was this 2-seater hatchback Microcar manufactured and marketed by this group led by Annette Winkler?",
+      "expected": "46 countries. [F1] [F2]",
+      "base": "The Smart Fortwo was marketed in 46 countries worldwide.",
+      "adapted": "46. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:572675c2708984140094c6d9",
+      "kind": "extractive_answer",
+      "question": "Who was Joseph's father?",
+      "expected": "Jacob. [F1]",
+      "base": "According to the evidence provided, Joseph's father was Jacob.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "hotpot_qa:5ae1d6b6554299234fd04325",
+      "kind": "multi_hop",
+      "question": "Which rap duo includes a performer who starred in \"Sol Goode\"?",
+      "expected": "The Wow. [F1] [F2]",
+      "base": "The rap duo that includes a performer who starred in \"Sol Goode\" is The Wow. According to the evidence provided, Balthazar Getty, who starred in \"Sol Goode,\" is a member of the rap duo The Wow.",
+      "adapted": "The Wow. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:5ad4d7b65b96ef001a10a313",
+      "kind": "unanswerable",
+      "question": "What strip club-related law were the council members trying to repeat?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "The council members were trying to repeat the city's \"no touch\" laws at strip clubs.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "hotpot_qa:5adff3bc55429925eb1afb81",
+      "kind": "multi_hop",
+      "question": "You're No Good: was covered in a charting version by which soul singer and pianist?",
+      "expected": "Betty Everett. [F1] [F2]",
+      "base": "You're No Good was covered in a charting version by Betty Everett.",
+      "adapted": "Betty Everett. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:570fe5335ab6b8190039109a",
+      "kind": "extractive_answer",
+      "question": "What organization commented on the deal between EMC and Dell?",
+      "expected": "FBR Capital Markets. [F1]",
+      "base": "The organizations that commented on the deal between EMC and Dell include:\n\n1. FBR Capital Markets\n2. Fortune\n3. The Register\n4. William Blair & Company\n\nThese commenters expressed varying opinions about the deal, with some praising its potential benefits while others expressing concerns about strategic synergies and market impact.",
+      "adapted": "Commentators. [F1]"
+    },
+    {
+      "id": "halueval_qa:502d3c756794e3b1",
+      "kind": "grounded_qa",
+      "question": "Where does the American singer-songwriter, Vic Chessnutt, who features on an album of covers of Gram Parsons' songs, hail from?",
+      "expected": "Athens, Georgia. [F1]",
+      "base": "Vic Chesnutt hails from Athens, Georgia.",
+      "adapted": "Athens, Georgia. [F1]"
+    },
+    {
+      "id": "squad_v2:5a8c452afd22b3001a8d8693",
+      "kind": "unanswerable",
+      "question": "What did System R avoid to change the way data was stored?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "System R avoided changing the way data was stored by keeping it in a single large \"chunk\" for each record.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "squad_v2:56d0bcc5234ae51400d9c434",
+      "kind": "extractive_answer",
+      "question": "What describes the connection between the conditions of cyclic existence?",
+      "expected": "The Twelve Nidānas. [F1]",
+      "base": "The Twelve Nidānas describe a causal connection between the subsequent conditions or characteristics of cyclic existence, each one giving rise to the next.",
+      "adapted": "The Twelve Nidānas. [F1]"
+    },
+    {
+      "id": "squad_v2:572709f75951b619008f8519",
+      "kind": "extractive_answer",
+      "question": "How many Americans were found to have intermediate health literacy?",
+      "expected": "44%. [F1]",
+      "base": "According to the evidence provided, 44% of adult Americans were found to have intermediate health literacy.",
+      "adapted": "44%. [F1]"
+    },
+    {
+      "id": "squad_v2:56facb5d8f12f319006301b3",
+      "kind": "extractive_answer",
+      "question": "What restriction does W-VHS recordings have?",
+      "expected": "analog only. [F1]",
+      "base": "W-VHS recordings are analog-only.",
+      "adapted": "analog only. [F1]"
+    },
+    {
+      "id": "squad_v2:570da2de16d0071400510c2b",
+      "kind": "extractive_answer",
+      "question": "What military forces usually integrate air defnce as a separate arm or part of artillery?",
+      "expected": "Western and Commonwealth militaries. [F1]",
+      "base": "Most Western and Commonwealth militaries integrate air defence as a separate arm or part of artillery.",
+      "adapted": "Most Western and Commonwealth militaries. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a809dcb554299485f598667",
+      "kind": "multi_hop",
+      "question": "How many downloads did the lead single from Over My Head get as of January 2015?",
+      "expected": "4.7 million. [F1] [F2]",
+      "base": "According to the evidence provided, the lead single from \"Over My Head\" (which was originally titled \"Cable Car\") received 4.7 million downloads as of January 2015.",
+      "adapted": "4.7 million. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:572ca4e8dfb02c14005c6bda",
+      "kind": "extractive_answer",
+      "question": "Who has the power and right to enact statutes for interstate dealings?",
+      "expected": "Congress. [F1]",
+      "base": "Congress has the power and right to enact statutes for interstate dealings.",
+      "adapted": "Congress. [F1]"
+    },
+    {
+      "id": "squad_v2:56dfe1e57aa994140058e20f",
+      "kind": "extractive_answer",
+      "question": "What is an example of a brewer that owns pubs throughout Britain?",
+      "expected": "Greene King. [F1]",
+      "base": "An example of a brewer that owns pubs throughout Britain is Greene King.",
+      "adapted": "Greene King. [F1]"
+    },
+    {
+      "id": "halueval_qa:1992790a70838e6f",
+      "kind": "grounded_qa",
+      "question": "City Centre and Melbourne City Centre is near what market?",
+      "expected": "Queen Victoria Market. [F1]",
+      "base": "The city centre and Melbourne City Centre is near Queen Victoria Market.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "squad_v2:56e77ae437bdd419002c400d",
+      "kind": "extractive_answer",
+      "question": "Who was the first Archivist at the National Archives?",
+      "expected": "R.D.W. Connor. [F1]",
+      "base": "The first Archivist at the National Archives was R.D.W. Connor. He began serving in 1934 when the National Archives was established by Congress.",
+      "adapted": "R.D.W. Connor. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ab8999155429919ba4e232e",
+      "kind": "multi_hop",
+      "question": "The Sinfonia Varsovia is an orchestra based in Warsaw, Poland, since 2003 the orchestra has been led by which Polish composer and conductor, as its artistic director?",
+      "expected": "Krzysztof Eugeniusz Penderecki. [F1] [F2]",
+      "base": "The Sinfonia Varsovia is an orchestra based in Warsaw, Poland, since 2003. It has been led by Krzysztof Penderecki as its artistic director.",
+      "adapted": "Krzysztof Eugeniusz Penderecki. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:572fff11947a6a140053cf20",
+      "kind": "extractive_answer",
+      "question": "What border does I-19 come close to?",
+      "expected": "U.S.-Mexico border. [F1]",
+      "base": "I-19 comes close to the U.S.-Mexico border.",
+      "adapted": "U.S.-Mexico border. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a8f10535542995b44241f45",
+      "kind": "multi_hop",
+      "question": "Johannes Vermeer's works include which painting, located in the Rijksmuseum in Amsterdam, Netherlands?",
+      "expected": "Vermeer works (including \"The Milkmaid\". [F1] [F2]",
+      "base": "Johannes Vermeer's work \"The Milkmaid\" is located in the Rijksmuseum in Amsterdam, Netherlands.",
+      "adapted": "The Milkmaid. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:bb2ea7127fd4d5aa",
+      "kind": "grounded_qa",
+      "question": "What drug is the main ingredient referenced in the \"drank\" of the song Drank in My Cup?",
+      "expected": "cough syrup. [F1]",
+      "base": "The main ingredient referenced in the \"drank\" of the song \"Drank in My Cup\" is purple drank. Purple drank is a slang term for a concoction that includes prescription-strength cough syrup used in a manner inconsistent with its labeling, making it a recreational drug.",
+      "adapted": "cough syrup. [F1]"
+    },
+    {
+      "id": "squad_v2:5709847a200fba1400368111",
+      "kind": "extractive_answer",
+      "question": "What concept helps map and define people's experiences of self in society?",
+      "expected": "the concept of boundaries. [F1]",
+      "base": "The concept that helps map and define people's experiences of self in society is boundaries.",
+      "adapted": "boundaries. [F1]"
+    },
+    {
+      "id": "squad_v2:5731ea07b9d445190005e67c",
+      "kind": "extractive_answer",
+      "question": "What was the multi day of remembrance for the dead?",
+      "expected": "Parentalia. [F1]",
+      "base": "The multi-day festival of remembrance for the dead was Parentalia, which took place in February.",
+      "adapted": "Parentalia. [F1]"
+    },
+    {
+      "id": "squad_v2:570ac5ed4103511400d599c7",
+      "kind": "extractive_answer",
+      "question": "How may aircraft carriers be classified?",
+      "expected": "according to the type of aircraft they carry and their operational assignments. [F1]",
+      "base": "Aircraft carriers can be classified according to the type of aircraft they carry and their operational assignments.",
+      "adapted": "according to the type of aircraft they carry and their operational assignments. [F1]"
+    },
+    {
+      "id": "halueval_qa:2b735a7ee2f2549d",
+      "kind": "grounded_qa",
+      "question": "May Gorslin Preston Slosson died in what Michigan county?",
+      "expected": "Washtenaw County. [F1]",
+      "base": "May Gorslin Preston Slosson died in Washtenaw County, Michigan.",
+      "adapted": "Washtenaw County. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a847aa6554299123d8c2265",
+      "kind": "multi_hop",
+      "question": "The covered wagon was long the dominant form of transport in pre-industrial America, it heavily relied upon along such travel routes as the Great Wagon Road, an improved trail through which location, from Pennsylvania to North Carolina, and from there to Georgia in colonial America?",
+      "expected": "Great Appalachian Valley. [F1] [F2]",
+      "base": "The covered wagon was long the dominant form of transport in pre-industrial America, and it heavily relied upon along such travel routes as the Great Wagon Road, an improved trail that ran through the Great Appalachian Valley from Pennsylvania to North Carolina, and from there to Georgia in colonial America.",
+      "adapted": "Great Appalachian Valley. [F1] [F2]"
+    },
+    {
+      "id": "hotpot_qa:5ac3d31a5542995ef918c249",
+      "kind": "multi_hop",
+      "question": "Angus Brayshaw is the grandson of the Australian who played what two sports?",
+      "expected": "Australian rules football and cricket. [F1] [F2]",
+      "base": "Angus Brayshaw is the grandson of Ian Brayshaw, who played both Australian rules football and cricket.",
+      "adapted": "Australian rules football and cricket. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:5726b44edd62a815002e8d71",
+      "kind": "extractive_answer",
+      "question": "Who introduced a bill in 1795 about minimum wage?",
+      "expected": "Samuel Whitbread. [F1]",
+      "base": "Samuel Whitbread MP introduced a bill in 1795 about minimum wage.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "squad_v2:5a68e4ff8476ee001a58a84e",
+      "kind": "unanswerable",
+      "question": "What did Genghis Khan steal from South Asia?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "hotpot_qa:5a7a6b1955429941d65f262d",
+      "kind": "multi_hop",
+      "question": "Which suitcase manufacturer is named after a Peruvian artifact and has a store in an urban shopping mall in Time Warner Center in Manhattan?",
+      "expected": "Tumi Holdings, Inc. [F1] [F2]",
+      "base": "Based on the provided evidence, Tumi Inc. fits both criteria:\n1. It is a suitcase manufacturer named after a Peruvian artifact (Tumi is derived from the Quechua word \"tumi\" meaning \"to carry\").\n2. It has a store in an urban shopping mall in Time Warner Center in Manhattan, specifically at The Shops at Columbus Circle.\nTherefore, Tumi Inc. meets the requirements of the question.",
+      "adapted": "Tumi. [F1] [F2]"
+    },
+    {
+      "id": "hotpot_qa:5a79dddd5542994f819ef0e0",
+      "kind": "multi_hop",
+      "question": "During what year was the incorporated town and deep water seaport founded?",
+      "expected": "1936. [F1] [F2]",
+      "base": "The incorporated town and deep water seaport Searsport, Maine was founded in 1936.",
+      "adapted": "1936. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:e000d4a3569992a2",
+      "kind": "grounded_qa",
+      "question": "Alvarezsauroidea was named after a physicist who won the Nobel Prize in Physics in what year?",
+      "expected": "1968. [F1]",
+      "base": "Alvarezsauroidea was named after Luis Walter Alvarez, who won the Nobel Prize in Physics in 1968.",
+      "adapted": "1968. [F1]"
+    },
+    {
+      "id": "squad_v2:56f7d4f7aef2371900625c25",
+      "kind": "extractive_answer",
+      "question": "Did the tenants of the wealthier genrty lose their nobility?",
+      "expected": "no. [F1]",
+      "base": "I do not have enough verified evidence to answer. The evidence provided states that the tenants of the wealthier gentry retained all their constitutional prerogatives, including their hereditary juridical status, which determines nobility. Therefore, it is not clear whether they lost their nobility or not based on the given information.",
+      "adapted": "no. [F1]"
+    },
+    {
+      "id": "halueval_qa:52a0215a47ab1020",
+      "kind": "grounded_qa",
+      "question": "While already serving a life sentence, Joseph Druce killed a Roman Catholic priest who had been assigned to parishes in what state?",
+      "expected": "Massachusetts. [F1]",
+      "base": "While already serving a life sentence, Joseph Druce killed a Roman Catholic priest who had been assigned to parishes in Massachusetts.",
+      "adapted": "Massachusetts. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ab2da51554299545a2cfacb",
+      "kind": "multi_hop",
+      "question": "What is the nationality of the designer of the set for Chronicle?",
+      "expected": "Japanese American. [F1] [F2]",
+      "base": "The designer of the set for Chronicle is Isamu Noguchi, who was Japanese American.",
+      "adapted": "Japanese American. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:347580960b8266f6",
+      "kind": "grounded_qa",
+      "question": "Which painter created the 'Beguiling of Merlin' and was closely associated with the later part of the Pre-Raphaelite movement?",
+      "expected": "Edward Burne-Jones. [F1]",
+      "base": "The painter who created the 'Beguiling of Merlin' and was closely associated with the later part of the Pre-Raphaelite movement was Edward Burne-Jones.",
+      "adapted": "Edward Burne-Jones. [F1]"
+    },
+    {
+      "id": "halueval_qa:6fe70a1a8d0848e4",
+      "kind": "grounded_qa",
+      "question": "Which country music artist known for her song Pink Warrior has shared the stage with Miranda Lambert?",
+      "expected": "Candy Coburn. [F1]",
+      "base": "Candy Coburn has shared the stage with Miranda Lambert.",
+      "adapted": "Candy Coburn. [F1]"
+    },
+    {
+      "id": "squad_v2:57324681e99e3014001e6626",
+      "kind": "extractive_answer",
+      "question": "What do Witness publications say baptism symbolizes a person's personal dedication to?",
+      "expected": "God. [F1]",
+      "base": "Witness publications say baptism symbolizes personal dedication to God.",
+      "adapted": "God. [F1]"
+    },
+    {
+      "id": "squad_v2:5ace424c32bba1001ae4a0df",
+      "kind": "unanswerable",
+      "question": "Over the past twenty years, rights-holders have complained to whom?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "Over the past twenty years, rights-holders have complained to Google.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "hotpot_qa:5a7dfc995542997cc2c474e2",
+      "kind": "multi_hop",
+      "question": "Which poet is older, Robert Frost or Paul Scott?",
+      "expected": "Robert Lee Frost. [F1] [F2]",
+      "base": "Robert Frost is older than Paul Scott. Robert Frost was born on March 26, 1874, while Paul Scott was born on March 25, 1920.",
+      "adapted": "Robert Lee Frost. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:5727c9d34b864d1900163d21",
+      "kind": "extractive_answer",
+      "question": "What did closer groove spacing result in?",
+      "expected": "Lower recorded volume. [F1]",
+      "base": "Closer groove spacing resulted in lower recorded volume.",
+      "adapted": "Lower recorded volume. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a7e94be5542993067513589",
+      "kind": "multi_hop",
+      "question": "What co-writer of the Ozzy Osbourne song about the Cold War died in a plane crash in 1982?",
+      "expected": "Randy Rhoads. [F1] [F2]",
+      "base": "Bob Daisley died in a plane crash in 1982.",
+      "adapted": "Randy Rhoads. [F1] [F2]"
+    },
+    {
+      "id": "hotpot_qa:5ae2ec8a55429928c4239568",
+      "kind": "multi_hop",
+      "question": "Where is the residence of the \"Proper Education\" remixer known as Cirez D?",
+      "expected": "Los Angeles, California. [F1] [F2]",
+      "base": "According to the evidence provided, Eric Prydz, who is known as Cirez D, resides in Los Angeles, California.",
+      "adapted": "Los Angeles, California. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:5a362701788daf001a5f8767",
+      "kind": "unanswerable",
+      "question": "Where do Muslims mainly live in?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "Muslims mainly live in rural areas of Himachal Pradesh.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "halueval_qa:6399827373ca8a6a",
+      "kind": "grounded_qa",
+      "question": "Which breed of dog is extinct, the Bracco Italiano or the St. John's water dog?",
+      "expected": "St. John's water dog. [F1]",
+      "base": "The St. John's water dog is extinct.",
+      "adapted": "St. John's water dog. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ae2ceb85542991a06ce98da",
+      "kind": "multi_hop",
+      "question": "What resort has over 3,000 slot machines and is the only depiction of Soviet culture in the US?",
+      "expected": "Tropicana Atlantic City. [F1] [F2]",
+      "base": "Based on the provided evidence, the resort that has over 3,000 slot machines and is the only depiction of Soviet culture in the US is Mandalay Bay Resort in Las Vegas. This information can be directly inferred from the following facts:\n\n- Red Square (restaurant) is described as a Russian-themed restaurant located in the Mandalay Bay Resort in Las Vegas.\n- Red Square is noted as one of the only depictions of Soviet culture in the United States.\n- The Tropicana Casino & Resort Atlantic City, which was previously known as Red Square, had over 3,000 slot machines and 135",
+      "adapted": "Mandalay Bay Resort. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:2be59769739eefc3",
+      "kind": "grounded_qa",
+      "question": "The person who wrote dialogues and lyrics for the Telugu version for Sampoorna Ramayanam received the Sahitya Akademi Award in what year?",
+      "expected": "1987. [F1]",
+      "base": "The person who wrote dialogues and lyrics for the Telugu version of Sampoorna Ramayanam received the Sahitya Akademi Award in 1987.",
+      "adapted": "1987. [F1]"
+    },
+    {
+      "id": "halueval_qa:0ad1672424aff219",
+      "kind": "grounded_qa",
+      "question": "How tall is this luxury hotel and casino resort in Macau where the winners of 14th IIFA Awards were announced?",
+      "expected": "39-story. [F1]",
+      "base": "The luxury hotel and casino resort in Macau where the winners of the 14th IIFA Awards were announced is The Venetian Macao. It is a 39-story building located on the Cotai Strip in Macau.",
+      "adapted": "39-story. [F1]"
+    },
+    {
+      "id": "squad_v2:5ace498c32bba1001ae4a1ca",
+      "kind": "unanswerable",
+      "question": "What did Robert Kyncl confirm in May 2014?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "Robert Kyncl confirmed that YouTube would block the content of labels who do not negotiate deals to be included in the paid service \"to ensure that all content on the platform is governed by its new contractual terms.\"",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "squad_v2:5726fe74708984140094d7fb",
+      "kind": "extractive_answer",
+      "question": "What does the line integral of the electric field between the plates of a capacitor represent?",
+      "expected": "The voltage. [F1]",
+      "base": "The line integral of the electric field between the plates of a capacitor represents the potential difference (voltage) between those plates.",
+      "adapted": "voltage. [F1]"
+    },
+    {
+      "id": "squad_v2:572ec488cb0c0d14000f1525",
+      "kind": "extractive_answer",
+      "question": "What decision allowed Gaddafi to move Libya closer to socialism?",
+      "expected": "In September 1973, it was announced that all foreign oil producers active in Libya were to be nationalized. [F1]",
+      "base": "The decision that allowed Gaddafi to move Libya closer to socialism was the nationalization of the oil sector. This occurred in December 1971 when the RCC (National Command Council) began a program of nationalization, starting with the expropriation of British Petroleum's share of the British Petroleum-N.B. Hunt Sahir Field. This action marked a significant shift towards socialism and helped to boost Libya's economy and improve the standard of living for its citizens.",
+      "adapted": "nationalization. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a8bd0745542996e8ac88a13",
+      "kind": "multi_hop",
+      "question": "Which documentary film featured the Democrat who won a record four presidential elections?",
+      "expected": "The Roosevelts: An Intimate History. [F1] [F2]",
+      "base": "The documentary film that featured the Democrat who won a record four presidential elections is \"The Roosevelts: An Intimate History\". This film covers the lives and times of the Roosevelt family, including Franklin D. Roosevelt, who was a Democrat and won four presidential elections.",
+      "adapted": "The Roosevelts. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:ee130c2ca4d9a27c",
+      "kind": "grounded_qa",
+      "question": "The O'Reilly Factor for Kids writer settled how many sexual harassment lawsuits?",
+      "expected": "five. [F1]",
+      "base": "The O'Reilly Factor for Kids writer, Bill O'Reilly, settled five sexual harassment lawsuits.",
+      "adapted": "five. [F1]"
+    },
+    {
+      "id": "halueval_qa:769ee80c24a59f76",
+      "kind": "grounded_qa",
+      "question": "Who wrote this 1987 Newberry Honor-winning young-adult wilderness survival novel and the fifth and final novel of that same series, called Brian's Hunt?",
+      "expected": "Gary Paulsen. [F1]",
+      "base": "Gary Paulsen wrote both \"Hatchet\" (1987) and \"Brian's Hunt\" (2003).",
+      "adapted": "Gary Paulsen. [F1]"
+    },
+    {
+      "id": "squad_v2:572fb0a5b2c2fd140056835e",
+      "kind": "extractive_answer",
+      "question": "The entire country was being attack and Glover believe it help people to do what?",
+      "expected": "accept and deal. [F1]",
+      "base": "Glover believed that the knowledge that the entire country was being attacked and there was no way to escape the bombs helped people to accept and deal with the situation.",
+      "adapted": "accept and deal with the situation. [F1]"
+    },
+    {
+      "id": "squad_v2:5ad39891604f3c001a3fe7f8",
+      "kind": "unanswerable",
+      "question": "Where does the president preside during the Chief Justice impeachment trial?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "The President presides over the impeachment trial in the Senate.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "hotpot_qa:5a813e68554299260e20a279",
+      "kind": "multi_hop",
+      "question": "The Mercedes-Benz W116, is a series of flagship luxury sedans, produced from September 1972 until 1980, the W116 automobiles were the first Mercedes-Benz models to be officially called S-Class, the Mercedes-Benz S-Class, formerly known as Sonderklasse S-Klasse, is a series of luxury flagship vehicles produced by the German automaker Mercedes-Benz, a division of which German company ?",
+      "expected": "Daimler AG. [F1] [F2]",
+      "base": "The Mercedes-Benz W116 automobiles were the first Mercedes-Benz models to be officially called S-Class, and the Mercedes-Benz S-Class, formerly known as Sonderklasse (German for \"special class\", abbreviated as \"S-Klasse\"), is a series of luxury flagship vehicles produced by the German automaker Mercedes-Benz, a division of German company Daimler AG.",
+      "adapted": "Daimler AG. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:5728d4c43acd2414000dffab",
+      "kind": "extractive_answer",
+      "question": "Where is the principal of the Permanent Fund invested?",
+      "expected": "outside Alaska. [F1]",
+      "base": "The principal of the Permanent Fund is invested conservatively outside Alaska.",
+      "adapted": "conservatively outside Alaska. [F1]"
+    },
+    {
+      "id": "squad_v2:5a42c1514a4859001aac72e6",
+      "kind": "unanswerable",
+      "question": "What is dependent on the frame of refrence in Newtonian space?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "In Newtonian space, the frame of reference is independent of the objects contained within it.",
+      "adapted": "objects. [F1]"
+    },
+    {
+      "id": "squad_v2:5a8a4c4d3b2508001a72aa0c",
+      "kind": "unanswerable",
+      "question": "When did the annexation of Naples by Italy happen?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "The annexation of Naples by Italy occurred in 1861.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "halueval_qa:0833d85c4805e48e",
+      "kind": "grounded_qa",
+      "question": "The WS-15, code name Emei, is a Chinese after burning turbofan engine, a stealth, twinjet, fifth-generation fighter aircraft developed by China's Chengdu Aerospace Corporation for what airforce?",
+      "expected": "People's Liberation Army Air Force. [F1]",
+      "base": "The WS-15, also known as Emei, is a Chinese afterburning turbofan engine. It is used to power China's Chengdu J-20 fighter aircraft, which is a stealth, twinjet, fifth-generation fighter aircraft developed by China's Chengdu Aerospace Corporation for the People's Liberation Army Air Force (PLAAF).",
+      "adapted": "People's Liberation Army Air Force (PLAAF). [F1]"
+    },
+    {
+      "id": "halueval_qa:848df54319b31291",
+      "kind": "grounded_qa",
+      "question": "Which readers was the series The Lost Journals of Ven Polypheme published for?",
+      "expected": "readers in their youth. [F1]",
+      "base": "The series The Lost Journals of Ven Polypheme was published for readers in their youth, as it falls under the category of young adult fiction or young adult literature (YA).",
+      "adapted": "readers in their youth. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ae480ea5542996836b02cbc",
+      "kind": "multi_hop",
+      "question": "For what TV show, is the actor who plays the role of Nardole in Doctor Who, best known ?",
+      "expected": "Little Britain. [F1] [F2]",
+      "base": "The actor who plays the role of Nardole in Doctor Who, Matt Lucas, is best known for his work with David Walliams in the television show \"Little Britain\".",
+      "adapted": "Little Britain. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:56cfe88d234ae51400d9c076",
+      "kind": "extractive_answer",
+      "question": "What slowed down the growth of solar energy?",
+      "expected": "the outbreak of World War I and the discovery of cheap oil. [F1]",
+      "base": "The growth of solar energy was slowed down by the outbreak of World War I and the discovery of cheap oil in the 1930s.",
+      "adapted": "World War I and the discovery of cheap oil in the 1930s. [F1]"
+    },
+    {
+      "id": "halueval_qa:9183f6e77ab4e231",
+      "kind": "grounded_qa",
+      "question": "Kevin Quinn starred in a Disney channel series which was a spinoff of what show?",
+      "expected": "Jessie. [F1]",
+      "base": "Kevin Quinn starred in the Disney Channel series \"Bunk'd\", which was a spinoff of \"Jessie\".",
+      "adapted": "Jessie. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a8afa4a55429971feec45ba",
+      "kind": "multi_hop",
+      "question": "What is the nickname of the boxer who was offered to fight against Sergio Martinez in Atlantic City 2011?",
+      "expected": "Nicknamed \"The Punisher\", and standing at a height of 6 foot 1 inches, Williams was unusually tall for the three divisions in which he competed. [F1] [F2]",
+      "base": "The nickname of the boxer who was offered to fight against Sergio Martínez in Atlantic City, New Jersey, in 2011 was \"The Punisher\".",
+      "adapted": "The Punisher. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:3abdf3513c472edf",
+      "kind": "grounded_qa",
+      "question": "Which division does the football team, who made the playoffs for the first time in seven seasons in 2015, play within?",
+      "expected": "AFC East. [F1]",
+      "base": "The football team that made the playoffs for the first time in seven seasons in 2015 plays in the AFC East division.",
+      "adapted": "AFC East. [F1]"
+    },
+    {
+      "id": "squad_v2:572763d9dd62a815002e9bfe",
+      "kind": "extractive_answer",
+      "question": "What was the focus of paintings in Italy?",
+      "expected": "idealized compositions. [F1]",
+      "base": "The focus of paintings in Italy was on idealized compositions.",
+      "adapted": "idealized compositions. [F1]"
+    },
+    {
+      "id": "squad_v2:57261d7789a1e219009ac28d",
+      "kind": "extractive_answer",
+      "question": "Indigenous people in what zones use fur for warmth and protection?",
+      "expected": "arctic. [F1]",
+      "base": "Indigenous people in arctic zones and higher elevations use fur for warmth and protection.",
+      "adapted": "arctic zones. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ae20c12554299234fd043c5",
+      "kind": "multi_hop",
+      "question": "Fort Lyon was constructed south of a city whose population was what in the census of 2010?",
+      "expected": "139,966. [F1] [F2]",
+      "base": "Fort Lyon was constructed south of Alexandria, Virginia, which had a population of 139,966 at the 2010 census.",
+      "adapted": "139,966. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:572fd71ba23a5019007fca74",
+      "kind": "extractive_answer",
+      "question": "What was the name of the Mexican territory San Diego became part of in 1821?",
+      "expected": "Alta California. [F1]",
+      "base": "San Diego became part of the Mexican territory of Alta California in 1821.",
+      "adapted": "Alta California. [F1]"
+    },
+    {
+      "id": "squad_v2:5a878e111d3cee001a6a1245",
+      "kind": "unanswerable",
+      "question": "What are the variances of vacuum energy according to Coulomb's law?",
+      "expected": "I do not have enough verified evidence to answer.",
+      "base": "I do not have enough verified evidence to answer. The evidence provided does not mention the variances of vacuum energy or how they relate to Coulomb's law.",
+      "adapted": "I do not have enough verified evidence to answer."
+    },
+    {
+      "id": "squad_v2:57273cb5dd62a815002e99e8",
+      "kind": "extractive_answer",
+      "question": "Before the use of the cotton gin, how was cotton separated?",
+      "expected": "by hand. [F1]",
+      "base": "Before the use of the cotton gin, cotton fibers were pulled from the seeds tediously by hand.",
+      "adapted": "by hand. [F1]"
+    },
+    {
+      "id": "squad_v2:570e68670dc6ce1900205032",
+      "kind": "extractive_answer",
+      "question": "Who rewarded contributions to the arts and sciences?",
+      "expected": "\"order of chivalry of British constitutional monarchy. [F1]",
+      "base": "King George V rewarded contributions to the arts and sciences.",
+      "adapted": "King George V. [F1]"
+    },
+    {
+      "id": "halueval_qa:9695a30bde15fc8c",
+      "kind": "grounded_qa",
+      "question": "Chris Gould is the brother of a placekicker who played college football where?",
+      "expected": "Penn State. [F1]",
+      "base": "Chris Gould is the brother of Robbie Gould, who played college football at Penn State.",
+      "adapted": "Penn State. [F1]"
+    },
+    {
+      "id": "squad_v2:56d127f317492d1400aabab8",
+      "kind": "extractive_answer",
+      "question": "What is the highest object of meditation called?",
+      "expected": "arūpajhānas. [F1]",
+      "base": "The highest object of meditation is called arūpajhānas.",
+      "adapted": "arūpajhānas. [F1]"
+    },
+    {
+      "id": "squad_v2:57311f3905b4da19006bcdc6",
+      "kind": "extractive_answer",
+      "question": "What countries utilize strategic bomber aircraft in their missions?",
+      "expected": "US, Russia, and the People's Republic of China. [F1]",
+      "base": "The US, Russia, and the People's Republic of China utilize strategic bomber aircraft in their missions.",
+      "adapted": "US, Russia, and the People's Republic of China. [F1]"
+    },
+    {
+      "id": "halueval_qa:d50d32ba9c8011ef",
+      "kind": "grounded_qa",
+      "question": "Who claimed responsibility for the hotel attack that killed Carsten Thomassen?",
+      "expected": "the Taliban. [F1]",
+      "base": "The Taliban claimed responsibility for the hotel attack that killed Carsten Thomassen.",
+      "adapted": "Taliban. [F1]"
+    },
+    {
+      "id": "halueval_qa:a64ff489cdd37cfe",
+      "kind": "grounded_qa",
+      "question": "What is the birth date of this American professional basketball player, who entered the league out of high school and was a recruit to the 2004-05 Duke Blue Devil men's basketball team?",
+      "expected": "September 11, 1985. [F1]",
+      "base": "Shaun Patrick Livingston was born on September 11, 1985.",
+      "adapted": "September 11, 1985. [F1]"
+    },
+    {
+      "id": "squad_v2:57257a9769ff041400e58df7",
+      "kind": "extractive_answer",
+      "question": "What was Victoria's unofficial title?",
+      "expected": "the grandmother of Europe. [F1]",
+      "base": "Victoria's unofficial title was \"the grandmother of Europe.\"",
+      "adapted": "\"the grandmother of Europe\". [F1]"
+    },
+    {
+      "id": "halueval_qa:985b06da0e97f932",
+      "kind": "grounded_qa",
+      "question": "How ling is the bridge to the main airport in Hong Kong?",
+      "expected": "1177 m. [F1]",
+      "base": "The Ting Kau Bridge is 1177 meters long.",
+      "adapted": "1177 m. [F1]"
+    },
+    {
+      "id": "halueval_qa:948f8eb9bb464ecb",
+      "kind": "grounded_qa",
+      "question": "Wanaka Airport no longer has scheduled commercial flights, with Air New Zealand, a company based in what city, having ceased flights to the airport in 2013?",
+      "expected": "Auckland. [F1]",
+      "base": "Based on the provided evidence, Air New Zealand is based in Auckland.",
+      "adapted": "Auckland. [F1]"
+    },
+    {
+      "id": "squad_v2:5725b6c4271a42140099d07d",
+      "kind": "extractive_answer",
+      "question": "Rabbi Yehuda Hachasid led a group of how many Jews into Jerusalem?",
+      "expected": "1,500. [F1]",
+      "base": "Rabbi Yehuda Hachasid led a group of 1,500 Jews into Jerusalem.",
+      "adapted": "1,500. [F1]"
+    },
+    {
+      "id": "squad_v2:572e951fdfa6aa1500f8d185",
+      "kind": "extractive_answer",
+      "question": "Which two of Feynman's colleagues helped put the lectures into book format?",
+      "expected": "Robert B. Leighton and Matthew Sands. [F1]",
+      "base": "Robert B. Leighton and Matthew Sands helped put the lectures into book format.",
+      "adapted": "Robert B. Leighton and Matthew Sands. [F1]"
+    },
+    {
+      "id": "squad_v2:5732113b0fdd8d15006c674a",
+      "kind": "extractive_answer",
+      "question": "What factors sustained the beliefs in gods according to Varro?",
+      "expected": "devotion and cult. [F1]",
+      "base": "According to Varro, the beliefs in gods were sustained by mortal devotion and cult.",
+      "adapted": "devotion and cult. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ac2595155429951e9e6856c",
+      "kind": "multi_hop",
+      "question": "Which actors star in the the movie that inspired Karle Pyaar Karle?",
+      "expected": "Marion Cotillard and Guillaume Canet. [F1] [F2]",
+      "base": "Based on the provided evidence, the movie that inspired Karle Pyaar Karle is Love Me If You Dare. The evidence states that Love Me If You Dare stars Marion Cotillard and Guillaume Canet. Therefore, Marion Cotillard and Guillaume Canet are the actors who star in the movie that inspired Karle Pyaar Karle.",
+      "adapted": "Marion Cotillard and Guillaume Canet. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:45340691f006b880",
+      "kind": "grounded_qa",
+      "question": "What actor from The Imitation Game also starred in \"Revolver\", \"RocknRolla\" and \"Sherlock Holmes\"?",
+      "expected": "Mark Strong. [F1]",
+      "base": "Based on the provided evidence, the actor who starred in \"Revolver\", \"RocknRolla\", and \"Sherlock Holmes\" is Matthew Goode.",
+      "adapted": "Matthew Goode. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5ac191c455429964131be231",
+      "kind": "multi_hop",
+      "question": "What dynasty was founded by a Viking leader in the mid 9th century? (Info A: Viking leader founder, Info B: mid 9th century)",
+      "expected": "Uí Ímair. [F1] [F2]",
+      "base": "The dynasty founded by a Viking leader in the mid-9th century was the Uí Ímair dynasty. This dynasty was led by Ímar, who was a Viking leader in Ireland and Scotland during the mid-late 9th century. The Uí Ímair dynasty ruled much of the Irish Sea region, including parts of Ireland, Scotland, and Northern England.",
+      "adapted": "Uí Ímair. [F1] [F2]"
+    },
+    {
+      "id": "hotpot_qa:5a7dcda25542990b8f503abb",
+      "kind": "multi_hop",
+      "question": "In what month and year was the release of the novel that \"The Divergent Series: Allegiant\" was based on?",
+      "expected": "October 2013. [F1] [F2]",
+      "base": "The novel that \"The Divergent Series: Allegiant\" was based on was released in October 2013.",
+      "adapted": "October 2013. [F1] [F2]"
+    },
+    {
+      "id": "squad_v2:56fb72beb28b3419009f1d38",
+      "kind": "extractive_answer",
+      "question": "When did the reign of Louis the Pious end?",
+      "expected": "840. [F1]",
+      "base": "The reign of Louis the Pious ended in 840.",
+      "adapted": "840. [F1]"
+    },
+    {
+      "id": "hotpot_qa:5a86db8c5542996432c571f2",
+      "kind": "multi_hop",
+      "question": "Lisbeth Hummen stared in which 1975 French erotic fantasy horror film?",
+      "expected": "La Bête. [F1] [F2]",
+      "base": "Lisbeth Hummel starred in the 1975 French erotic fantasy horror film \"The Beast\".",
+      "adapted": "The Beast. [F1] [F2]"
+    },
+    {
+      "id": "halueval_qa:c05badf74084db06",
+      "kind": "grounded_qa",
+      "question": "The comedian and actor Breckiin Meyer can be seen in which movie that involves traveling 1800 miles to retrieve a tape?",
+      "expected": "Road Trip. [F1]",
+      "base": "The comedian and actor Breckin Meyer can be seen in the movie \"Road Trip\".",
+      "adapted": "Road Trip. [F1]"
+    }
+  ]
+}
